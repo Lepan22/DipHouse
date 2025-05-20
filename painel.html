@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel DipHouse</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      padding: 20px;
+    }
+    h1, h2 {
+      margin: 10px 0;
+    }
+    #clock {
+      font-size: 4em;
+    }
+    #date {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+    }
+    #calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .day {
+      padding: 10px;
+      background: #222;
+      border-radius: 5px;
+    }
+    #todo {
+      width: 100%;
+      max-width: 500px;
+    }
+    #todo input {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    #todo-list {
+      list-style: none;
+      padding: 0;
+    }
+    #todo-list li {
+      background: #333;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+    #weather {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="clock">--:--:--</div>
+  <div id="date">-- de ----- de ----</div>
+
+  <div id="calendar"></div>
+
+  <div id="todo">
+    <input type="text" id="new-task" placeholder="Adicionar tarefa e pressionar Enter...">
+    <ul id="todo-list"></ul>
+  </div>
+
+  <div id="weather">Carregando clima...</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, push, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
+      authDomain: "diphouse-control.firebaseapp.com",
+      projectId: "diphouse-control",
+      storageBucket: "diphouse-control.firebasestorage.app",
+      messagingSenderId: "126387069829",
+      appId: "1:126387069829:web:7e365252a98da884075aec"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const todoRef = ref(db, 'todo');
+
+    const newTaskInput = document.getElementById('new-task');
+    const todoList = document.getElementById('todo-list');
+
+    newTaskInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && newTaskInput.value.trim() !== '') {
+        push(todoRef, newTaskInput.value.trim());
+        newTaskInput.value = '';
+      }
+    });
+
+    onValue(todoRef, (snapshot) => {
+      todoList.innerHTML = '';
+      snapshot.forEach(child => {
+        const li = document.createElement('li');
+        li.textContent = child.val();
+        li.addEventListener('click', () => remove(ref(db, 'todo/' + child.key)));
+        todoList.appendChild(li);
+      });
+    });
+
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function updateDate() {
+      const now = new Date();
+      const meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+      const dia = now.getDate();
+      const mes = meses[now.getMonth()];
+      const ano = now.getFullYear();
+      document.getElementById('date').textContent = `${dia} de ${mes} de ${ano}`;
+    }
+    updateDate();
+
+    function renderCalendar() {
+      const calendar = document.getElementById('calendar');
+      calendar.innerHTML = '';
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const days = ["D", "S", "T", "Q", "Q", "S", "S"];
+      days.forEach(d => calendar.appendChild(Object.assign(document.createElement('div'), { textContent: d, className: 'day' })))
+
+      for (let i = 0; i < firstDay; i++) calendar.appendChild(document.createElement('div'));
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const div = document.createElement('div');
+        div.className = 'day';
+        div.textContent = d;
+        calendar.appendChild(div);
+      }
+    }
+    renderCalendar();
+
+    async function loadWeather() {
+      try {
+        const resp = await fetch('https://api.weatherapi.com/v1/current.json?key=fb9e5edc32514f84b4b113601241905&q=São Paulo&lang=pt');
+        const data = await resp.json();
+        document.getElementById('weather').innerHTML = `
+          <strong>Clima:</strong> ${data.current.condition.text}, ${data.current.temp_c}°C
+        `;
+      } catch (err) {
+        document.getElementById('weather').textContent = 'Erro ao carregar clima';
+      }
+    }
+    loadWeather();
+    setInterval(loadWeather, 1800000); // Atualiza a cada 30 minutos
+
+  </script>
+</body>
+</html>
