@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão do Painel</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #fff; padding: 20px; }
+    h2 { margin-top: 30px; }
+    input, textarea, button { padding: 6px; margin: 5px 0; display: block; width: 100%; }
+    .item { margin-bottom: 10px; background: #222; padding: 10px; border-radius: 5px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+    img { width: 100%; max-height: 200px; object-fit: cover; }
+  </style>
+</head>
+<body>
+  <h1>Gestão do Painel</h1>
+
+  <h2>Adicionar Evento</h2>
+  <input type="text" id="eventoData" placeholder="Dia (DD/MM/YYYY)">
+  <textarea id="eventoTexto" placeholder="Descrição do evento"></textarea>
+  <button onclick="adicionarEvento()">Salvar Evento</button>
+
+  <h2>Adicionar Tarefa</h2>
+  <input type="text" id="tarefaTexto" placeholder="Tarefa">
+  <button onclick="adicionarTarefa()">Salvar Tarefa</button>
+
+  <h2>Upload de Fotos</h2>
+  <input type="file" id="fotoInput" multiple accept="image/*">
+  <button onclick="uploadFotos()">Enviar Fotos</button>
+  <div class="grid" id="galeria"></div>
+
+<script>
+  const firebaseConfig = {
+    databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
+    storageBucket: "diphouse-control.appspot.com"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const storage = firebase.storage();
+
+  function adicionarEvento() {
+    const data = document.getElementById('eventoData').value;
+    const texto = document.getElementById('eventoTexto').value;
+    if (data && texto) {
+      db.ref('eventos').push({ dia: data, texto });
+      alert('Evento salvo!');
+    }
+  }
+
+  function adicionarTarefa() {
+    const texto = document.getElementById('tarefaTexto').value;
+    if (texto) {
+      db.ref('tarefas').push({ texto, concluida: false });
+      alert('Tarefa salva!');
+    }
+  }
+
+  function uploadFotos() {
+    const files = document.getElementById('fotoInput').files;
+    Array.from(files).forEach(file => {
+      const ref = storage.ref('fotos/' + file.name);
+      ref.put(file).then(snapshot => {
+        snapshot.ref.getDownloadURL().then(url => {
+          db.ref('fotos').push({ url });
+          carregarFotos();
+        });
+      });
+    });
+  }
+
+  function carregarFotos() {
+    const galeria = document.getElementById('galeria');
+    galeria.innerHTML = '';
+    db.ref('fotos').once('value', snap => {
+      snap.forEach(child => {
+        const url = child.val().url;
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<img src="${url}" alt="foto">`;
+        galeria.appendChild(div);
+      });
+    });
+  }
+
+  carregarFotos();
+</script>
+</body>
+</html>
