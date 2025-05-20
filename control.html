@@ -12,7 +12,7 @@
 
     const $ = (id) => document.getElementById(id);
 
-    // Eventos
+    // EVENTOS
     $('btnAddEvento').onclick = () => {
       const dia = $('eventoData').value.trim();
       const texto = $('eventoTexto').value.trim();
@@ -24,28 +24,30 @@
     };
 
     onValue(ref(db, 'eventos'), snap => {
-      const container = $('listaEventos');
-      container.innerHTML = '';
+      const el = $('listaEventos');
+      el.innerHTML = '';
       snap.forEach(child => {
         const { dia, texto } = child.val();
-        container.innerHTML += `
-          <div class="item">
-            <b>${dia}</b> — ${texto}<br>
-            <button onclick="editarEvento('${child.key}', '${dia}', \`${texto}\`)">Editar</button>
-            <button onclick="removerItem('eventos', '${child.key}')">Excluir</button>
+        el.innerHTML += `
+          <div class="card">
+            <b>${dia}</b><br>${texto}
+            <div class="actions">
+              <button onclick="editarEvento('${child.key}', '${dia}', \`${texto}\`)">✏️</button>
+              <button onclick="removerItem('eventos', '${child.key}')">🗑️</button>
+            </div>
           </div>`;
       });
     });
 
     window.editarEvento = (key, dia, texto) => {
-      const novoDia = prompt('Nova data (DD/MM/AAAA):', dia);
+      const novoDia = prompt('Nova data:', dia);
       const novoTexto = prompt('Novo texto:', texto);
       if (novoDia && novoTexto) {
         update(ref(db, `eventos/${key}`), { dia: novoDia, texto: novoTexto });
       }
     };
 
-    // Tarefas
+    // TAREFAS
     $('btnAddTarefa').onclick = () => {
       const texto = $('tarefaTexto').value.trim();
       if (texto) {
@@ -55,17 +57,19 @@
     };
 
     onValue(ref(db, 'tarefas'), snap => {
-      const container = $('listaTarefas');
-      container.innerHTML = '';
+      const el = $('listaTarefas');
+      el.innerHTML = '';
       snap.forEach(child => {
         const { texto, concluida } = child.val();
-        container.innerHTML += `
-          <div class="item">
-            ${concluida ? `<s>${texto}</s>` : texto}<br>
-            <button onclick="toggleConclusao('${child.key}', ${!concluida})">
-              ${concluida ? 'Desfazer' : 'Concluir'}
-            </button>
-            <button onclick="removerItem('tarefas', '${child.key}')">Excluir</button>
+        el.innerHTML += `
+          <div class="card">
+            ${concluida ? `<s>${texto}</s>` : texto}
+            <div class="actions">
+              <button onclick="toggleConclusao('${child.key}', ${!concluida})">
+                ${concluida ? '↩️' : '✅'}
+              </button>
+              <button onclick="removerItem('tarefas', '${child.key}')">🗑️</button>
+            </div>
           </div>`;
       });
     });
@@ -73,15 +77,15 @@
     window.toggleConclusao = (key, status) =>
       update(ref(db, `tarefas/${key}`), { concluida: status });
 
-    // Fotos
+    // FOTOS
     $('btnUploadFoto').onclick = () => {
       const files = $('fotoInput').files;
       Array.from(files).forEach(file => {
-        const caminho = 'fotos/' + file.name;
-        const fileRef = sRef(storage, caminho);
+        const path = 'fotos/' + Date.now() + '-' + file.name;
+        const fileRef = sRef(storage, path);
         uploadBytes(fileRef, file).then(() => {
           getDownloadURL(fileRef).then(url => {
-            push(ref(db, 'fotos'), { url, path: caminho });
+            push(ref(db, 'fotos'), { url, path }); // <- SALVA NO DB
           });
         });
       });
@@ -93,13 +97,14 @@
       snap.forEach(child => {
         const { url, path } = child.val();
         galeria.innerHTML += `
-          <div class="foto">
+          <div class="foto-box">
             <img src="${url}" />
-            <button onclick="removerFoto('${child.key}', '${path}')">X</button>
+            <button onclick="removerFoto('${child.key}', '${path}')">🗑️</button>
           </div>`;
       });
     });
 
+    // GLOBAIS
     window.removerItem = (colecao, key) =>
       remove(ref(db, `${colecao}/${key}`));
 
@@ -108,43 +113,57 @@
       deleteObject(sRef(storage, path));
     };
   </script>
+
   <style>
-    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
+    body {
+      background: #111; color: #fff; font-family: sans-serif;
+      padding: 20px; max-width: 1000px; margin: auto;
+    }
     input, textarea, button {
-      width: 100%; padding: 10px; margin: 5px 0; border: none;
-      border-radius: 5px; font-size: 1rem;
+      padding: 10px; margin: 5px 0; border: none;
+      border-radius: 5px; width: 100%; font-size: 1rem;
     }
-    h2 { margin-top: 30px; }
-    .item, .foto {
-      background: #222; padding: 10px; margin: 10px 0;
-      border-radius: 5px;
+    button { cursor: pointer; }
+    h2 { margin-top: 40px; }
+    .grid { display: grid; gap: 10px; }
+
+    .card {
+      background: #222; padding: 10px; border-radius: 8px;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    button { background: #444; color: #fff; cursor: pointer; }
-    button:hover { background: #666; }
-    img {
-      width: 100%; max-height: 180px; object-fit: cover;
-      border-radius: 5px; margin-top: 5px;
+    .actions button {
+      margin-left: 5px;
+      background: #444; color: white;
+      border-radius: 5px; padding: 5px 10px;
     }
-    .foto button {
-      position: absolute; margin-top: -185px; margin-left: 5px;
-      background: rgba(255, 0, 0, 0.7);
+    .foto-box {
+      position: relative; margin-top: 10px;
     }
-    .foto { position: relative; }
+    .foto-box img {
+      width: 100%; max-height: 180px;
+      object-fit: cover; border-radius: 8px;
+    }
+    .foto-box button {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(255, 0, 0, 0.7); border: none;
+      padding: 6px; border-radius: 5px; color: white;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <h1>Painel de Controle</h1>
 
-  <h2>Evento</h2>
-  <input type="text" id="eventoData" placeholder="Data (DD/MM/AAAA)">
+  <h2>Eventos</h2>
+  <input id="eventoData" placeholder="Data (DD/MM/AAAA)">
   <textarea id="eventoTexto" placeholder="Descrição do evento"></textarea>
   <button id="btnAddEvento">Salvar Evento</button>
-  <div id="listaEventos"></div>
+  <div id="listaEventos" class="grid"></div>
 
-  <h2>Tarefa</h2>
-  <input type="text" id="tarefaTexto" placeholder="Tarefa">
+  <h2>Tarefas</h2>
+  <input id="tarefaTexto" placeholder="Tarefa">
   <button id="btnAddTarefa">Salvar Tarefa</button>
-  <div id="listaTarefas"></div>
+  <div id="listaTarefas" class="grid"></div>
 
   <h2>Fotos</h2>
   <input type="file" id="fotoInput" multiple accept="image/*">
