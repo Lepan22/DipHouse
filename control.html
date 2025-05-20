@@ -102,4 +102,28 @@
   </script>
 
   <style>
-    body { background: #111; color: #fff; font-family: sans-serif; padding:
+    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
+    input, textarea, button { margin: 5px 0; padding: 10px; width: 100%; border: none; border-radius: 5px; }
+    img { margin-top: 5px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Painel de Controle</h1>
+
+  <h2>Eventos</h2>
+  <input id="eventoData" placeholder="Data">
+  <textarea id="eventoTexto" placeholder="Descrição"></textarea>
+  <button id="btnAddEvento">Salvar Evento</button>
+  <div id="listaEventos"></div>
+
+  <h2>Tarefas</h2>
+  <input id="tarefaTexto" placeholder="Tarefa">
+  <button id="btnAddTarefa">Salvar Tarefa</button>
+  <div id="listaTarefas"></div>
+
+  <h2>Fotos</h2>
+  <input type="file" id="fotoInput" multiple accept="image/*">
+  <button id="btnUploadFoto">Enviar Fotos</button>
+  <div id="listaFotos"></div>
+</body>
+</html>
