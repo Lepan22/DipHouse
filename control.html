@@ -1,166 +1,329 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Painel de Controle</title>
-  <script type="module">
-    import {
-      db, ref, push, update, remove, onValue,
-      storage, sRef, uploadBytes, getDownloadURL, deleteObject
-    } from './firebase.js';
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyBClDBA7f9-jfF6Nz6Ia-YlZ6G-hx3oerY",
+  authDomain: "lepanapp.firebaseapp.com",
+  databaseURL: "https://lepanapp-default-rtdb.firebaseio.com",
+  projectId: "lepanapp",
+  storageBucket: "lepanapp.firebasestorage.app",
+  messagingSenderId: "542989944344",
+  appId: "1:542989944344:web:576e28199960fd5440a56d"
+};
 
-    const $ = (id) => document.getElementById(id);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    // EVENTOS
-    $('btnAddEvento').onclick = () => {
-      const dia = $('eventoData').value.trim();
-      const texto = $('eventoTexto').value.trim();
-      if (dia && texto) {
-        push(ref(db, 'eventos'), { dia, texto });
-        $('eventoData').value = '';
-        $('eventoTexto').value = '';
-      }
-    };
+let produtosCadastrados = [];
+let listaProdutos = [];
+let equipeAlocada = [];
+let logisticaAlocada = [];
 
-    onValue(ref(db, 'eventos'), snap => {
-      const el = $('listaEventos');
-      el.innerHTML = '';
-      snap.forEach(child => {
-        const { dia, texto } = child.val();
-        el.innerHTML += `
-          <div class="item">
-            <b>${dia}</b> — ${texto}
-            <button onclick="editarEvento('${child.key}', '${dia}', \`${texto}\`)">Editar</button>
-            <button onclick="removerItem('eventos', '${child.key}')">Excluir</button>
-          </div>`;
-      });
+// Carregar dados iniciais
+
+async function carregarProdutos() {
+  const snapshot = await db.ref('produtos').once('value');
+  produtosCadastrados = [];
+  snapshot.forEach(child => {
+    const p = child.val();
+    produtosCadastrados.push({
+      id: child.key,
+      nome: p.nome,
+      valorVenda: parseFloat(p.valorVenda || 0),
+      custo: parseFloat(p.custo || 0)
     });
-
-    window.editarEvento = (key, dia, texto) => {
-      const novoDia = prompt('Nova data:', dia);
-      const novoTexto = prompt('Novo texto:', texto);
-      if (novoDia && novoTexto) {
-        update(ref(db, `eventos/${key}`), { dia: novoDia, texto: novoTexto });
-      }
-    };
-
-    // TAREFAS
-    $('btnAddTarefa').onclick = () => {
-      const texto = $('tarefaTexto').value.trim();
-      if (texto) {
-        push(ref(db, 'tarefas'), { texto, concluida: false });
-        $('tarefaTexto').value = '';
-      }
-    };
-
-    onValue(ref(db, 'tarefas'), snap => {
-      const el = $('listaTarefas');
-      el.innerHTML = '';
-      snap.forEach(child => {
-        const { texto, concluida } = child.val();
-        el.innerHTML += `
-          <div class="item">
-            ${concluida ? `<s>${texto}</s>` : texto}
-            <button onclick="toggleConclusao('${child.key}', ${!concluida})">
-              ${concluida ? 'Desfazer' : 'Concluir'}
-            </button>
-            <button onclick="removerItem('tarefas', '${child.key}')">Excluir</button>
-          </div>`;
-      });
+  });
+  renderizarProdutos();
+  calcularTotais();
+}
+);
     });
+  });
+}
 
-    window.toggleConclusao = (key, status) =>
-      update(ref(db, `tarefas/${key}`), { concluida: status });
-
-    // FOTOS - corrigido
-    $('btnUploadFoto').onclick = () => {
-      const files = $('fotoInput').files;
-      Array.from(files).forEach(file => {
-        const path = 'fotos/' + Date.now() + '-' + file.name;
-        const fileRef = sRef(storage, path);
-
-        uploadBytes(fileRef, file)
-          .then(() => getDownloadURL(fileRef))
-          .then(url => {
-            return push(ref(db, 'fotos'), { url, path });
-          })
-          .then(() => {
-            console.log('Foto salva no DB com sucesso!');
-          })
-          .catch(err => {
-            console.error('Erro ao salvar foto:', err);
-          });
-      });
-    };
-
-    onValue(ref(db, 'fotos'), snap => {
-      const galeria = $('listaFotos');
-      galeria.innerHTML = '';
-      snap.forEach(child => {
-        const { url, path } = child.val();
-        galeria.innerHTML += `
-          <div class="foto-box">
-            <img src="${url}" />
-            <button onclick="removerFoto('${child.key}', '${path}')">Excluir</button>
-          </div>`;
-      });
+function carregarResponsaveis() {
+  const selectResponsavel = document.getElementById('responsavel');
+  db.ref('equipe').once('value').then(snapshot => {
+    selectResponsavel.innerHTML = '<option value="">Selecione</option>';
+    snapshot.forEach(child => {
+      const membro = child.val();
+      const opt = document.createElement('option');
+      opt.value = membro.apelido;
+      opt.textContent = membro.apelido;
+      selectResponsavel.appendChild(opt);
     });
+  });
+}
 
-    // GLOBAIS
-    window.removerItem = (colecao, key) =>
-      remove(ref(db, `${colecao}/${key}`));
 
-    window.removerFoto = (key, path) => {
-      remove(ref(db, `fotos/${key}`));
-      deleteObject(sRef(storage, path));
-    };
-  </script>
+async function carregarClientes() {
+  const selectEvento = document.getElementById('nomeEvento');
+  const snapshot = await db.ref('clientes').once('value');
+  selectEvento.innerHTML = '<option value="">Selecione</option>';
+  snapshot.forEach(child => {
+    const cliente = child.val();
+    if (cliente.status === 'Fechado' && cliente.clienteAtivo?.nomeEvento) {
+      const opt = document.createElement('option');
+      opt.value = cliente.clienteAtivo.nomeEvento;
+      opt.textContent = cliente.clienteAtivo.nomeEvento;
+      selectEvento.appendChild(opt);
+    }
+  });
+}
 
-  <style>
-    body {
-      background: #111; color: #fff; font-family: sans-serif;
-      padding: 20px; max-width: 800px; margin: auto;
-    }
-    input, textarea, button {
-      padding: 10px; margin: 5px 0; border: none;
-      border-radius: 5px; width: 100%;
-    }
-    h2 { margin-top: 40px; }
-    .item {
-      background: #222; padding: 10px; margin: 10px 0;
-      border-radius: 5px;
-    }
-    .foto-box {
-      margin-top: 10px; position: relative;
-    }
-    .foto-box img {
-      width: 100%; max-height: 180px; object-fit: cover; border-radius: 5px;
-    }
-    .foto-box button {
-      position: absolute; top: 10px; right: 10px;
-      background: rgba(255, 0, 0, 0.7); border: none;
-      padding: 6px; border-radius: 5px; color: white;
-    }
-  </style>
-</head>
-<body>
-  <h1>Painel de Controle</h1>
+    });
+  });
+}
 
-  <h2>Eventos</h2>
-  <input id="eventoData" placeholder="Data (DD/MM/AAAA)">
-  <textarea id="eventoTexto" placeholder="Descrição do evento"></textarea>
-  <button id="btnAddEvento">Salvar Evento</button>
-  <div id="listaEventos"></div>
+// Produto
+function adicionarProduto(prod = {}) {
+  listaProdutos.push({
+    produtoId: prod.produtoId || '',
+    quantidade: prod.quantidade || 0,
+    estimativa: prod.estimativa || 0,
+    congelado: prod.congelado || 0,
+    assado: prod.assado || 0,
+    perda: prod.perda || 0,
+    observacao: prod.observacao || ''
+  });
+  renderizarProdutos(); calcularTotais();
+}
 
-  <h2>Tarefas</h2>
-  <input id="tarefaTexto" placeholder="Tarefa">
-  <button id="btnAddTarefa">Salvar Tarefa</button>
-  <div id="listaTarefas"></div>
+function renderizarProdutos() {
+  const tabela = document.getElementById('tabelaProdutos');
+  tabela.innerHTML = '';
+  listaProdutos.forEach((item, index) => {
+    const produto = produtosCadastrados.find(p => p.id === item.produtoId) || {};
+    const valorVenda = produto.valorVenda || 0;
+    const custo = produto.custo || 0;
+    const potencial = (item.quantidade || 0) * valorVenda;
 
-  <h2>Fotos</h2>
-  <input type="file" id="fotoInput" multiple accept="image/*">
-  <button id="btnUploadFoto">Enviar Fotos</button>
-  <div id="listaFotos"></div>
-</body>
-</html>
+    const row = document.createElement('tr');
+    
+    const row = document.createElement('tr');
+    const vendida = Math.max(0, item.quantidade - item.congelado - item.assado - item.perda);
+    const valorVenda = produto.valorVenda || 0;
+    const custo = produto.custo || 0;
+    const valorPerda = item.perda * custo;
+    const totalVenda = vendida * valorVenda;
+
+    
+row.innerHTML = `
+  <td>
+    <select class="form-select form-select-sm produto-nome">
+      ${produtosCadastrados.map(p => `<option value="${p.id}" ${p.id === item.produtoId ? 'selected' : ''}>${p.nome}</option>`).join('')}
+    </select>
+  </td>
+  <td><input type="number" class="form-control form-control-sm produto-qtd" value="${item.quantidade}"></td>
+  <td><input type="number" class="form-control form-control-sm produto-congelado" value="${item.congelado}"></td>
+  <td><input type="number" class="form-control form-control-sm produto-assado" value="${item.assado}"></td>
+  <td><input type="number" class="form-control form-control-sm produto-perda" value="${item.perda}"></td>
+  <td><input type="text" class="form-control form-control-sm" disabled value="\${Math.max(0, item.quantidade - item.congelado - item.assado - item.perda)}"></td>
+  <td><input type="text" class="form-control form-control-sm" disabled value="R$ \${(item.perda * (produto.custo || 0)).toFixed(2)}"></td>
+  <td><input type="text" class="form-control form-control-sm" disabled value="R$ \${(Math.max(0, item.quantidade - item.congelado - item.assado - item.perda) * (produto.valorVenda || 0)).toFixed(2)}"></td>
+  <td class="d-flex gap-1">
+    <button class="btn btn-sm btn-outline-secondary" onclick="moverProduto(${index}, -1)">🔼</button>
+    <button class="btn btn-sm btn-outline-secondary" onclick="moverProduto(${index}, 1)">🔽</button>
+    <button class="btn btn-sm btn-outline-danger" onclick="removerProduto(${index})">🗑️</button>
+  </td>
+`;
+
+
+    
+
+    row.querySelector('.produto-nome').onchange = e => { item.produtoId = e.target.value; renderizarProdutos(); calcularTotais(); };
+    row.querySelector('.produto-qtd').oninput = e => { item.quantidade = parseInt(e.target.value) || 0; calcularTotais(); }; calcularTotais(); };
+        linha2.querySelector('.produto-congelado').oninput = e => { item.congelado = parseInt(e.target.value) || 0; calcularTotais(); };
+    linha2.querySelector('.produto-assado').oninput = e => { item.assado = parseInt(e.target.value) || 0; calcularTotais(); };
+    linha2.querySelector('.produto-perda').oninput = e => { item.perda = parseInt(e.target.value) || 0; calcularTotais(); };
+    linha2.querySelector('.produto-obs').oninput = e => item.observacao = e.target.value;
+  });
+}
+
+function moverProduto(index, direcao) {
+  const novoIndex = index + direcao;
+  if (novoIndex >= 0 && novoIndex < listaProdutos.length) {
+    [listaProdutos[index], listaProdutos[novoIndex]] = [listaProdutos[novoIndex], listaProdutos[index]];
+    renderizarProdutos(); calcularTotais();
+  }
+}
+
+// Equipe e Logística
+function carregarEquipeDisponivel() {
+  db.ref('equipe').once('value').then(snapshot => {
+    const s = document.createElement('select');
+    snapshot.forEach(child => {
+      const p = child.val();
+      const opt = document.createElement('option');
+      opt.value = child.key;
+      opt.textContent = p.apelido || p.nomeCompleto;
+      s.appendChild(opt);
+    });
+    window.equipeOptions = s.innerHTML;
+  });
+}
+function carregarLogisticaDisponivel() {
+  db.ref('logistica').once('value').then(snapshot => {
+    const s = document.createElement('select');
+    snapshot.forEach(child => {
+      const p = child.val();
+      const opt = document.createElement('option');
+      opt.value = child.key;
+      opt.textContent = p.nome;
+      s.appendChild(opt);
+    });
+    window.logisticaOptions = s.innerHTML;
+  });
+}
+function adicionarEquipe() {
+  equipeAlocada.push({ membroId: '', valor: 0 });
+  renderizarEquipe();
+}
+function adicionarLogistica() {
+  logisticaAlocada.push({ prestadorId: '', valor: 0 });
+  renderizarLogistica();
+}
+function renderizarEquipe() {
+  const container = document.getElementById('equipeContainer');
+  container.innerHTML = '';
+  equipeAlocada.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'row mb-2';
+    div.innerHTML = `
+      <div class="col-md-6"><select class="form-select form-select-sm">${window.equipeOptions}</select></div>
+      <div class="col-md-4"><input type="number" class="form-control form-control-sm" value="${item.valor}"></div>
+      <div class="col-md-2 d-grid"><button class="btn btn-sm btn-danger" onclick="removerEquipe(${i})">Remover</button></div>
+    `;
+    div.querySelector('select').value = item.membroId;
+    div.querySelector('select').onchange = e => item.membroId = e.target.value;
+    div.querySelector('input').oninput = e => item.valor = parseFloat(e.target.value) || 0;
+    container.appendChild(div);
+  });
+}
+function renderizarLogistica() {
+  const container = document.getElementById('logisticaContainer');
+  container.innerHTML = '';
+  logisticaAlocada.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'row mb-2';
+    div.innerHTML = `
+      <div class="col-md-6"><select class="form-select form-select-sm">${window.logisticaOptions}</select></div>
+      <div class="col-md-4"><input type="number" class="form-control form-control-sm" value="${item.valor}"></div>
+      <div class="col-md-2 d-grid"><button class="btn btn-sm btn-danger" onclick="removerLogistica(${i})">Remover</button></div>
+    `;
+    div.querySelector('select').value = item.prestadorId;
+    div.querySelector('select').onchange = e => item.prestadorId = e.target.value;
+    div.querySelector('input').oninput = e => item.valor = parseFloat(e.target.value) || 0;
+    container.appendChild(div);
+  });
+}
+function removerEquipe(i) { equipeAlocada.splice(i, 1); renderizarEquipe(); }
+function removerLogistica(i) { logisticaAlocada.splice(i, 1); renderizarLogistica(); }
+
+// Salvar evento
+let salvando = false;
+document.getElementById('formEvento').addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (salvando) return;
+  salvando = true;
+
+  const evento = {
+    nomeEvento: document.getElementById('nomeEvento').value,
+    data: document.getElementById('data').value,
+    responsavel: document.getElementById('responsavel').value,
+    vendaPDV: parseFloat(document.getElementById('vendaPDV').value) || 0,
+    cmvReal: parseFloat(document.getElementById('cmvReal').value) || 0,
+    status: document.getElementById('status').value,
+    observacoes: document.getElementById('observacoes').value,
+    produtos: listaProdutos,
+    equipe: equipeAlocada,
+    logistica: logisticaAlocada
+  };
+
+  const id = document.getElementById('eventoId').value || db.ref('eventos').push().key;
+  db.ref('eventos/' + id).set(evento).then(() => {
+    alert("Evento salvo com sucesso!");
+    salvando = false;
+  }).catch(err => {
+    console.error("Erro ao salvar:", err);
+    salvando = false;
+  });
+});
+
+// Inicializar tudo
+await carregarProdutos();
+carregarResponsaveis();
+await carregarClientes();
+carregarEquipeDisponivel();
+carregarLogisticaDisponivel();
+
+
+
+function calcularTotais() {
+  let totalVendida = 0;
+  let vendaSistema = 0;
+  let custoPerda = 0;
+  let valorAssados = 0;
+  let cmv = 0;
+
+  listaProdutos.forEach(item => {
+    const produto = produtosCadastrados.find(p => p.id === item.produtoId) || {};
+    const qtd = item.quantidade || 0;
+    const congelado = item.congelado || 0;
+    const assado = item.assado || 0;
+    const perda = item.perda || 0;
+    const valorVenda = produto.valorVenda || 0;
+    const custo = produto.custo || 0;
+
+    const vendida = Math.max(0, qtd - congelado - assado - perda);
+    totalVendida += vendida;
+    vendaSistema += vendida * valorVenda;
+    custoPerda += perda * custo;
+    valorAssados += assado * custo;
+    cmv += vendida * custo;
+  });
+
+  const custoEquipe = equipeAlocada.reduce((s, e) => s + (e.valor || 0), 0);
+  const custoLogistica = logisticaAlocada.reduce((s, l) => s + (l.valor || 0), 0);
+  const vendaPDV = parseFloat(document.getElementById("vendaPDV").value) || 0;
+  const estimativa = parseFloat(document.getElementById("estimativaVenda").value) || 0;
+  const cmvReal = parseFloat(document.getElementById("cmvReal").value) || cmv;
+  const lucro = vendaPDV - cmvReal - custoLogistica - custoEquipe - custoPerda;
+  const diferenca = vendaPDV - vendaSistema;
+
+  document.getElementById("totalVendida").innerText = totalVendida;
+  document.getElementById("vendaSistema").innerText = vendaSistema.toFixed(2);
+  document.getElementById("custoPerda").innerText = custoPerda.toFixed(2);
+  document.getElementById("valorAssados").innerText = valorAssados.toFixed(2);
+  document.getElementById("cmvCalculado").innerText = cmv.toFixed(2);
+  document.getElementById("custoEquipe").innerText = custoEquipe.toFixed(2);
+  document.getElementById("custoLogistica").innerText = custoLogistica.toFixed(2);
+  document.getElementById("lucroFinal").innerText = lucro.toFixed(2);
+  document.getElementById("diferencaVenda").innerText = diferenca.toFixed(2);
+}
+
+
+
+['vendaPDV', 'cmvReal', 'estimativaVenda'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calcularTotais);
+});
+
+
+
+window.adicionarProduto = adicionarProduto;
+window.adicionarEquipe = adicionarEquipe;
+window.adicionarLogistica = adicionarLogistica;
+window.removerEquipe = removerEquipe;
+window.removerLogistica = removerLogistica;
+
+document.addEventListener("DOMContentLoaded", () => {
+  await carregarProdutos();
+  carregarResponsaveis();
+  await carregarClientes();
+  carregarEquipeDisponivel();
+  carregarLogisticaDisponivel();
+});
+
+function removerProduto(index) {
+  listaProdutos.splice(index, 1);
+  renderizarProdutos();
+  calcularTotais();
+}
