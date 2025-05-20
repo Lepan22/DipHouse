@@ -57,36 +57,35 @@
   <h2>Adicionar Evento</h2>
   <input type="text" id="eventoData" placeholder="Data (DD/MM/AAAA)">
   <textarea id="eventoTexto" placeholder="Descrição do evento"></textarea>
-  <button onclick="adicionarEvento()">Salvar Evento</button>
+  <button id="salvarEventoBtn">Salvar Evento</button>
   <div id="listaEventos"></div>
 
   <h2>Adicionar Tarefa</h2>
   <input type="text" id="tarefaTexto" placeholder="Tarefa">
-  <button onclick="adicionarTarefa()">Salvar Tarefa</button>
+  <button id="salvarTarefaBtn">Salvar Tarefa</button>
   <div id="listaTarefas"></div>
 
   <h2>Upload de Fotos</h2>
   <input type="file" id="fotoInput" multiple accept="image/*">
-  <button onclick="uploadFotos()">Enviar Fotos</button>
+  <button id="uploadFotosBtn">Enviar Fotos</button>
   <div class="grid" id="galeria"></div>
 
   <script type="module">
     import { db, ref, push, update, remove, onValue, storage, sRef, uploadBytes, getDownloadURL, deleteObject } from './firebase.js';
 
     // EVENTOS
-    function adicionarEvento() {
-      const dia = document.getElementById('eventoData').value;
-      const texto = document.getElementById('eventoTexto').value;
+    document.getElementById('salvarEventoBtn').addEventListener('click', () => {
+      const dia = document.getElementById('eventoData').value.trim();
+      const texto = document.getElementById('eventoTexto').value.trim();
       if (dia && texto) {
         push(ref(db, 'eventos'), { dia, texto });
         document.getElementById('eventoData').value = '';
         document.getElementById('eventoTexto').value = '';
       }
-    }
+    });
 
     function carregarEventos() {
       const container = document.getElementById('listaEventos');
-      container.innerHTML = '';
       onValue(ref(db, 'eventos'), snap => {
         container.innerHTML = '';
         snap.forEach(child => {
@@ -102,8 +101,90 @@
         });
       });
     }
-    window.editarEvento = function (key, dia, texto) {
+
+    window.editarEvento = (key, dia, texto) => {
       const novoDia = prompt("Nova data (DD/MM/AAAA):", dia);
       const novoTexto = prompt("Nova descrição:", texto);
       if (novoDia && novoTexto) {
-        update(ref(db, 'eventos/' + key), { dia: novoDia,
+        update(ref(db, 'eventos/' + key), { dia: novoDia, texto: novoTexto });
+      }
+    };
+
+    // TAREFAS
+    document.getElementById('salvarTarefaBtn').addEventListener('click', () => {
+      const texto = document.getElementById('tarefaTexto').value.trim();
+      if (texto) {
+        push(ref(db, 'tarefas'), { texto, concluida: false });
+        document.getElementById('tarefaTexto').value = '';
+      }
+    });
+
+    function carregarTarefas() {
+      const container = document.getElementById('listaTarefas');
+      onValue(ref(db, 'tarefas'), snap => {
+        container.innerHTML = '';
+        snap.forEach(child => {
+          const { texto, concluida } = child.val();
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            ${concluida ? '<s>' + texto + '</s>' : texto}<br>
+            <button class="btn-small" onclick="toggleConclusao('${child.key}', ${!concluida})">${concluida ? 'Desfazer' : 'Concluir'}</button>
+            <button class="btn-small" onclick="removerItem('tarefas', '${child.key}')">Excluir</button>
+          `;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    window.toggleConclusao = (key, status) => {
+      update(ref(db, 'tarefas/' + key), { concluida: status });
+    };
+
+    // FOTOS
+    document.getElementById('uploadFotosBtn').addEventListener('click', () => {
+      const files = document.getElementById('fotoInput').files;
+      Array.from(files).forEach(file => {
+        const path = 'fotos/' + file.name;
+        const fileRef = sRef(storage, path);
+        uploadBytes(fileRef, file).then(snapshot => {
+          getDownloadURL(snapshot.ref).then(url => {
+            push(ref(db, 'fotos'), { url, path });
+          });
+        });
+      });
+    });
+
+    function carregarFotos() {
+      const galeria = document.getElementById('galeria');
+      onValue(ref(db, 'fotos'), snap => {
+        galeria.innerHTML = '';
+        snap.forEach(child => {
+          const { url, path } = child.val();
+          const div = document.createElement('div');
+          div.className = 'foto-box';
+          div.innerHTML = `
+            <img src="${url}" alt="foto">
+            <button onclick="removerFoto('${child.key}', '${path}')">X</button>
+          `;
+          galeria.appendChild(div);
+        });
+      });
+    }
+
+    window.removerItem = (colecao, key) => {
+      remove(ref(db, `${colecao}/${key}`));
+    };
+
+    window.removerFoto = (key, path) => {
+      remove(ref(db, `fotos/${key}`));
+      deleteObject(sRef(storage, path));
+    };
+
+    // Inicialização
+    carregarEventos();
+    carregarTarefas();
+    carregarFotos();
+  </script>
+</body>
+</html>
