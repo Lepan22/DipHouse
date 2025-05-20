@@ -1,92 +1,109 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gestão do Painel</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <script type="module" src="firebase.js"></script>
   <style>
     body { font-family: sans-serif; background: #111; color: #fff; padding: 20px; }
     h2 { margin-top: 30px; }
-    input, textarea, button { padding: 6px; margin: 5px 0; display: block; width: 100%; }
-    .item { margin-bottom: 10px; background: #222; padding: 10px; border-radius: 5px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-    img { width: 100%; max-height: 200px; object-fit: cover; }
+    input, textarea, button {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 5px;
+      border: none;
+    }
+    .item {
+      background: #222;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 5px 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 15px;
+    }
+    .foto-box {
+      position: relative;
+    }
+    .foto-box button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(255, 0, 0, 0.7);
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+    }
+    img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    .btn-small {
+      padding: 5px;
+      margin-right: 5px;
+      font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
   <h1>Gestão do Painel</h1>
 
   <h2>Adicionar Evento</h2>
-  <input type="text" id="eventoData" placeholder="Dia (DD/MM/YYYY)">
+  <input type="text" id="eventoData" placeholder="Data (DD/MM/AAAA)">
   <textarea id="eventoTexto" placeholder="Descrição do evento"></textarea>
   <button onclick="adicionarEvento()">Salvar Evento</button>
+  <div id="listaEventos"></div>
 
   <h2>Adicionar Tarefa</h2>
   <input type="text" id="tarefaTexto" placeholder="Tarefa">
   <button onclick="adicionarTarefa()">Salvar Tarefa</button>
+  <div id="listaTarefas"></div>
 
   <h2>Upload de Fotos</h2>
   <input type="file" id="fotoInput" multiple accept="image/*">
   <button onclick="uploadFotos()">Enviar Fotos</button>
   <div class="grid" id="galeria"></div>
 
-<script>
-  const firebaseConfig = {
-    databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
-    storageBucket: "diphouse-control.appspot.com"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const storage = firebase.storage();
+  <script type="module">
+    import { db, ref, push, update, remove, onValue, storage, sRef, uploadBytes, getDownloadURL, deleteObject } from './firebase.js';
 
-  function adicionarEvento() {
-    const data = document.getElementById('eventoData').value;
-    const texto = document.getElementById('eventoTexto').value;
-    if (data && texto) {
-      db.ref('eventos').push({ dia: data, texto });
-      alert('Evento salvo!');
+    // EVENTOS
+    function adicionarEvento() {
+      const dia = document.getElementById('eventoData').value;
+      const texto = document.getElementById('eventoTexto').value;
+      if (dia && texto) {
+        push(ref(db, 'eventos'), { dia, texto });
+        document.getElementById('eventoData').value = '';
+        document.getElementById('eventoTexto').value = '';
+      }
     }
-  }
 
-  function adicionarTarefa() {
-    const texto = document.getElementById('tarefaTexto').value;
-    if (texto) {
-      db.ref('tarefas').push({ texto, concluida: false });
-      alert('Tarefa salva!');
-    }
-  }
-
-  function uploadFotos() {
-    const files = document.getElementById('fotoInput').files;
-    Array.from(files).forEach(file => {
-      const ref = storage.ref('fotos/' + file.name);
-      ref.put(file).then(snapshot => {
-        snapshot.ref.getDownloadURL().then(url => {
-          db.ref('fotos').push({ url });
-          carregarFotos();
+    function carregarEventos() {
+      const container = document.getElementById('listaEventos');
+      container.innerHTML = '';
+      onValue(ref(db, 'eventos'), snap => {
+        container.innerHTML = '';
+        snap.forEach(child => {
+          const { dia, texto } = child.val();
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            <strong>${dia}</strong>: ${texto}<br>
+            <button class="btn-small" onclick="editarEvento('${child.key}', '${dia}', \`${texto}\`)">Editar</button>
+            <button class="btn-small" onclick="removerItem('eventos', '${child.key}')">Excluir</button>
+          `;
+          container.appendChild(div);
         });
       });
-    });
-  }
-
-  function carregarFotos() {
-    const galeria = document.getElementById('galeria');
-    galeria.innerHTML = '';
-    db.ref('fotos').once('value', snap => {
-      snap.forEach(child => {
-        const url = child.val().url;
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `<img src="${url}" alt="foto">`;
-        galeria.appendChild(div);
-      });
-    });
-  }
-
-  carregarFotos();
-</script>
-</body>
-</html>
+    }
+    window.editarEvento = function (key, dia, texto) {
+      const novoDia = prompt("Nova data (DD/MM/AAAA):", dia);
+      const novoTexto = prompt("Nova descrição:", texto);
+      if (novoDia && novoTexto) {
+        update(ref(db, 'eventos/' + key), { dia: novoDia,
