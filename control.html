@@ -29,12 +29,10 @@
       snap.forEach(child => {
         const { dia, texto } = child.val();
         el.innerHTML += `
-          <div class="card">
-            <b>${dia}</b><br>${texto}
-            <div class="actions">
-              <button onclick="editarEvento('${child.key}', '${dia}', \`${texto}\`)">✏️</button>
-              <button onclick="removerItem('eventos', '${child.key}')">🗑️</button>
-            </div>
+          <div class="item">
+            <b>${dia}</b> — ${texto}
+            <button onclick="editarEvento('${child.key}', '${dia}', \`${texto}\`)">Editar</button>
+            <button onclick="removerItem('eventos', '${child.key}')">Excluir</button>
           </div>`;
       });
     });
@@ -62,14 +60,12 @@
       snap.forEach(child => {
         const { texto, concluida } = child.val();
         el.innerHTML += `
-          <div class="card">
+          <div class="item">
             ${concluida ? `<s>${texto}</s>` : texto}
-            <div class="actions">
-              <button onclick="toggleConclusao('${child.key}', ${!concluida})">
-                ${concluida ? '↩️' : '✅'}
-              </button>
-              <button onclick="removerItem('tarefas', '${child.key}')">🗑️</button>
-            </div>
+            <button onclick="toggleConclusao('${child.key}', ${!concluida})">
+              ${concluida ? 'Desfazer' : 'Concluir'}
+            </button>
+            <button onclick="removerItem('tarefas', '${child.key}')">Excluir</button>
           </div>`;
       });
     });
@@ -77,17 +73,24 @@
     window.toggleConclusao = (key, status) =>
       update(ref(db, `tarefas/${key}`), { concluida: status });
 
-    // FOTOS
+    // FOTOS - corrigido
     $('btnUploadFoto').onclick = () => {
       const files = $('fotoInput').files;
       Array.from(files).forEach(file => {
         const path = 'fotos/' + Date.now() + '-' + file.name;
         const fileRef = sRef(storage, path);
-        uploadBytes(fileRef, file).then(() => {
-          getDownloadURL(fileRef).then(url => {
-            push(ref(db, 'fotos'), { url, path }); // <- SALVA NO DB
+
+        uploadBytes(fileRef, file)
+          .then(() => getDownloadURL(fileRef))
+          .then(url => {
+            return push(ref(db, 'fotos'), { url, path });
+          })
+          .then(() => {
+            console.log('Foto salva no DB com sucesso!');
+          })
+          .catch(err => {
+            console.error('Erro ao salvar foto:', err);
           });
-        });
       });
     };
 
@@ -99,7 +102,7 @@
         galeria.innerHTML += `
           <div class="foto-box">
             <img src="${url}" />
-            <button onclick="removerFoto('${child.key}', '${path}')">🗑️</button>
+            <button onclick="removerFoto('${child.key}', '${path}')">Excluir</button>
           </div>`;
       });
     });
@@ -117,37 +120,27 @@
   <style>
     body {
       background: #111; color: #fff; font-family: sans-serif;
-      padding: 20px; max-width: 1000px; margin: auto;
+      padding: 20px; max-width: 800px; margin: auto;
     }
     input, textarea, button {
       padding: 10px; margin: 5px 0; border: none;
-      border-radius: 5px; width: 100%; font-size: 1rem;
+      border-radius: 5px; width: 100%;
     }
-    button { cursor: pointer; }
     h2 { margin-top: 40px; }
-    .grid { display: grid; gap: 10px; }
-
-    .card {
-      background: #222; padding: 10px; border-radius: 8px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .actions button {
-      margin-left: 5px;
-      background: #444; color: white;
-      border-radius: 5px; padding: 5px 10px;
+    .item {
+      background: #222; padding: 10px; margin: 10px 0;
+      border-radius: 5px;
     }
     .foto-box {
-      position: relative; margin-top: 10px;
+      margin-top: 10px; position: relative;
     }
     .foto-box img {
-      width: 100%; max-height: 180px;
-      object-fit: cover; border-radius: 8px;
+      width: 100%; max-height: 180px; object-fit: cover; border-radius: 5px;
     }
     .foto-box button {
       position: absolute; top: 10px; right: 10px;
       background: rgba(255, 0, 0, 0.7); border: none;
       padding: 6px; border-radius: 5px; color: white;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -158,16 +151,16 @@
   <input id="eventoData" placeholder="Data (DD/MM/AAAA)">
   <textarea id="eventoTexto" placeholder="Descrição do evento"></textarea>
   <button id="btnAddEvento">Salvar Evento</button>
-  <div id="listaEventos" class="grid"></div>
+  <div id="listaEventos"></div>
 
   <h2>Tarefas</h2>
   <input id="tarefaTexto" placeholder="Tarefa">
   <button id="btnAddTarefa">Salvar Tarefa</button>
-  <div id="listaTarefas" class="grid"></div>
+  <div id="listaTarefas"></div>
 
   <h2>Fotos</h2>
   <input type="file" id="fotoInput" multiple accept="image/*">
   <button id="btnUploadFoto">Enviar Fotos</button>
-  <div id="listaFotos" class="grid"></div>
+  <div id="listaFotos"></div>
 </body>
 </html>
