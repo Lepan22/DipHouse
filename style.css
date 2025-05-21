@@ -1,69 +1,33 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #121212;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 20px;
+  font-family: sans-serif;
+  background: #111;
+  color: #fff;
 }
 
-.container {
+.painel {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto;
-  gap: 20px;
-  width: 100%;
-  max-width: 1200px;
-}
-
-.box {
-  background-color: #1e1e1e;
-  border-radius: 15px;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 20px;
   padding: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-#clock {
-  font-size: 48px;
-  font-weight: bold;
-}
-
-#greeting {
-  font-size: 24px;
-  color: #bbb;
-}
-
-#photo img {
-  width: 100%;
-  height: 240px;
-  object-fit: cover;
+.relogio, .calendario, .clima, .foto, .todo, .agenda {
+  background: #222;
+  padding: 15px;
   border-radius: 10px;
 }
 
-#calendar, #weather, #tasks, #agenda {
-  min-height: 150px;
+.foto img {
+  width: 100%;
+  border-radius: 10px;
 }
 
-#calendar {
-  grid-column: 1 / 2;
-}
-
-#tasks, #agenda {
-  grid-column: 2 / 3;
-}
-
-#photo {
-  grid-column: 1 / 2;
+h3 {
+  margin: 0 0 10px;
 }
 
 ul {
   list-style: none;
-  padding-left: 0;
-}
-
-li {
-  padding: 5px 0;
-  border-bottom: 1px solid #333;
+  padding: 0;
 }
