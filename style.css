@@ -31,3 +31,13 @@ ul {
   list-style: none;
   padding: 0;
 }
+
+#gradeCalendario {
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+
+#gradeCalendario th, #gradeCalendario td {
+  padding: 5px;
+}
