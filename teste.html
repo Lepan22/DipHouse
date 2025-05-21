@@ -2,15 +2,19 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Preview Layout</title>
+  <title>Painel Completo</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <style>
     body {
       margin: 0;
-      background: #111;
-      color: white;
       font-family: sans-serif;
+      background: #111;
+      color: #fff;
     }
-    .grid {
+    .painel {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: repeat(5, 1fr);
@@ -18,37 +22,304 @@
       height: 100vh;
       padding: 10px;
     }
-    .item {
+    .bloco {
       background: #222;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .mensagem-alerta {
+      width: 100%;
+      height: 100%;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2em;
-      text-align: center;
+      cursor: pointer;
+      padding: 10px;
+      color: #fff;
     }
-    .relogio { grid-column: span 1; grid-row: span 1; }
-    .clima { grid-column: span 1; grid-row: span 1; }
-    .mensagem { grid-column: span 2; grid-row: span 1; background: #ff4d4d; }
-    .calendario { grid-column: span 2; grid-row: span 2; }
-    .agendamentos { grid-column: span 1; grid-row: span 2; }
-    .todo { grid-column: span 1; grid-row: span 2; }
-    .carrossel { grid-column: span 2; grid-row: span 2; }
-    .futuro { grid-column: span 2; grid-row: span 2; background: #333; }
+    .foto-carrossel img {
+      width: 100%;
+      height: auto;
+      max-height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+    .relogio-texto {
+      font-size: 3em;
+      font-weight: bold;
+    }
+    .clima-content {
+      text-align: center;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .calendario-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .calendario-content table {
+      width: 80%;
+      text-align: center;
+      border-collapse: collapse;
+      font-size: 1em;
+    }
+    .calendario-content th, .calendario-content td {
+      padding: 6px;
+    }
+    .lista {
+      width: 100%;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100%;
+    }
+    .lista h3 {
+      text-align: center;
+      margin: 0 0 10px 0;
+    }
+    .lista ul {
+      padding-left: 20px;
+      list-style: disc;
+      width: 100%;
+    }
+    .riscado {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
   </style>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
 
-<div class="grid">
-  <div class="item relogio">Relógio</div>
-  <div class="item clima">Clima</div>
-  <div class="item mensagem">Mensagem</div>
-  <div class="item calendario">Calendário</div>
-  <div class="item agendamentos">Agendamentos</div>
-  <div class="item todo">To-do</div>
-  <div class="item carrossel">Carrossel</div>
-  <div class="item futuro">Futuro</div>
+<div class="painel">
+
+  <div class="bloco" style="grid-column: span 1; grid-row: span 1;">
+    <div class="relogio-texto" id="hora"></div>
+  </div>
+
+  <div class="bloco" style="grid-column: span 1; grid-row: span 1;">
+    <div class="clima-content">
+      <h3>Clima - São Paulo</h3>
+      <div id="temp">--°C</div>
+      <div id="desc">Carregando...</div>
+    </div>
+  </div>
+
+  <div class="bloco" style="grid-column: span 2; grid-row: span 1;">
+    <div class="mensagem-alerta" id="mensagemAlerta">Mensagem</div>
+  </div>
+
+  <div class="bloco" style="grid-column: span 2; grid-row: span 2;">
+    <div class="calendario-content">
+      <h3 id="mesAno"></h3>
+      <table id="gradeCalendario"></table>
+    </div>
+  </div>
+
+  <div class="bloco" style="grid-column: span 1; grid-row: span 2;">
+    <div class="lista">
+      <h3>Agendamentos</h3>
+      <ul id="detalhesAgendamentos"></ul>
+    </div>
+  </div>
+
+  <div class="bloco" style="grid-column: span 1; grid-row: span 2;">
+    <div class="lista">
+      <h3>To-do</h3>
+      <ul id="tarefas"></ul>
+    </div>
+  </div>
+
+  <div class="bloco foto-carrossel" style="grid-column: span 2; grid-row: span 2;">
+    <img id="carrossel" src="" alt="Carrossel">
+  </div>
+
+  <div class="bloco" style="grid-column: span 2; grid-row: span 2;">
+  </div>
+
 </div>
+
+<script>
+var firebaseConfig = {
+  apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
+  authDomain: "diphouse-control.firebaseapp.com",
+  databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
+  projectId: "diphouse-control",
+  storageBucket: "diphouse-control.appspot.com",
+  messagingSenderId: "126387069829",
+  appId: "1:126387069829:web:7e365252a98da884075aec"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+
+// Relógio
+function atualizaHora() {
+  var agora = new Date();
+  document.getElementById('hora').textContent = agora.toLocaleTimeString();
+}
+setInterval(atualizaHora, 1000);
+atualizaHora();
+
+// Clima
+fetch('https://api.openweathermap.org/data/2.5/weather?q=Sao Paulo&units=metric&appid=f7ffe9a1155341c0f2a1882fb192257b')
+.then(r => r.json())
+.then(d => {
+  document.getElementById('temp').textContent = Math.round(d.main.temp) + '°C';
+  document.getElementById('desc').textContent = d.weather[0].description;
+});
+
+// Mensagem
+var alerta = document.getElementById('mensagemAlerta');
+var somTocando = false;
+db.ref('mensagemAtual').on('value', function(snapshot) {
+  var msg = snapshot.val();
+  if (msg) {
+    alerta.textContent = msg.texto;
+    alerta.style.background = '#ff4d4d';
+    if (msg.som && !somTocando) {
+      somTocando = true;
+      var beep = new Audio('https://www.soundjay.com/button/beep-07.wav');
+      beep.play();
+      setTimeout(() => { beep.pause(); somTocando = false; }, 5000);
+    }
+  } else {
+    alerta.style.display = 'none';
+  }
+});
+alerta.addEventListener('click', function() {
+  alerta.style.background = '#fff';
+  alerta.style.color = '#000';
+});
+
+// Tarefas
+db.ref('tarefas').on('value', function(snapshot) {
+  var lista = document.getElementById('tarefas');
+  lista.innerHTML = '';
+  snapshot.forEach(function(child) {
+    if (child.val().status === 'Aberto') {
+      var li = document.createElement('li');
+      var checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.onchange = function() {
+        db.ref('tarefas/' + child.key).update({ status: 'Fechado' });
+      };
+      li.appendChild(checkbox);
+      li.appendChild(document.createTextNode(child.val().texto));
+      lista.appendChild(li);
+    }
+  });
+});
+
+var categorias = {
+  "Escola": "#ff6666",
+  "Esporte": "#66b3ff",
+  "Saude": "#66ff66",
+  "Lazer": "#ffcc66",
+  "Viagem": "#ff99ff",
+  "Outras": "#cccccc"
+};
+
+function renderCalendario(agendamentos) {
+  var now = new Date();
+  var mes = now.getMonth();
+  var ano = now.getFullYear();
+  var diaHoje = now.getDate();
+  document.getElementById('mesAno').innerText = now.toLocaleString('default', { month: 'long' }) + ' ' + ano + ' - HOJE: ' + diaHoje;
+
+  var primeiro = new Date(ano, mes, 1).getDay();
+  var diasMes = new Date(ano, mes + 1, 0).getDate();
+  var dias = ['S','T','Q','Q','S','S','D'];
+  var tabela = '<tr>';
+  for (var d = 0; d < dias.length; d++) { tabela += '<th>' + dias[d] + '</th>'; }
+  tabela += '</tr><tr>';
+  for (var i = 0; i < primeiro; i++) tabela += '<td></td>';
+  for (var dia = 1; dia <= diasMes; dia++) {
+    var dataStr = ano + '-' + String(mes + 1).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
+    var cor = '';
+    for (var ag in agendamentos) {
+      if (agendamentos[ag].data === dataStr) {
+        cor = categorias[agendamentos[ag].categoria] || '#fff';
+        break;
+      }
+    }
+    var style = cor ? ' style="background:' + cor + ';border-radius:50%;"' : '';
+    tabela += '<td' + style + '>' + dia + '</td>';
+    if ((dia + primeiro) % 7 === 0) tabela += '</tr><tr>';
+  }
+  document.getElementById('gradeCalendario').innerHTML = tabela + '</tr>';
+}
+
+function listarDetalhes(agendamentos) {
+  var lista = document.getElementById('detalhesAgendamentos');
+  lista.innerHTML = '';
+
+  var ags = Object.values(agendamentos);
+  ags.sort(function(a, b) {
+    return new Date(a.data) - new Date(b.data);
+  });
+
+  var hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  var futuros = ags.filter(ag => new Date(ag.data) >= hoje);
+  var mostrar = futuros.length > 10 ? futuros.slice(0,10) : ags.slice(0,10);
+
+  mostrar.forEach(function(ag) {
+    var dataObj = new Date(ag.data);
+    var dataFormatada = ("0" + dataObj.getDate()).slice(-2) + "/" + ("0" + (dataObj.getMonth() + 1)).slice(-2);
+    var li = document.createElement('li');
+    li.textContent = dataFormatada + ' - ' + ag.detalhe;
+    if (dataObj < hoje) li.classList.add('riscado');
+    lista.appendChild(li);
+  });
+}
+
+db.ref('agendamentos').on('value', function(snapshot) {
+  var agendamentos = {};
+  snapshot.forEach(function(child) { agendamentos[child.key] = child.val(); });
+  renderCalendario(agendamentos);
+  listarDetalhes(agendamentos);
+});
+
+// Carrossel com links do Google Drive no Realtime Database
+var fotos = [], idx = 0;
+
+db.ref('fotos').once('value', function(snapshot) {
+  fotos = Object.values(snapshot.val() || {});
+  if (fotos.length > 0) {
+    trocarFoto();
+    setInterval(trocarFoto, 5000);
+  }
+});
+
+function trocarFoto() {
+  if (fotos.length > 0) {
+    document.getElementById('carrossel').src = fotos[idx];
+    idx = (idx + 1) % fotos.length;
+  }
+}
+
+// Auto-refresh a cada 120 segundos
+setInterval(() => location.reload(), 120000);
+</script>
 
 </body>
 </html>
