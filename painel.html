@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel Completo</title>
+  <title>Painel - Mensagem</title>
   <style>
     body {
       margin: 0;
@@ -10,28 +10,13 @@
       background: #111;
       color: #fff;
     }
-    .painel {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+    .mensagem-alerta {
+      background: #ff4d4d;
+      color: #fff;
       padding: 20px;
-    }
-    .bloco {
-      background: #222;
-      padding: 15px;
+      margin: 20px;
       border-radius: 10px;
-    }
-    table {
-      width: 100%;
-      text-align: center;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 10px;
-    }
-    input[type="checkbox"] {
-      transform: scale(1.5);
-      margin-right: 10px;
+      display: none;
     }
   </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -39,34 +24,8 @@
 </head>
 <body>
 
-<div class="painel">
-
-  <div class="bloco">
-    <div id="hora" style="font-size:2em;"></div>
-  </div>
-
-  <div class="bloco">
-    <h3>Clima - São Paulo</h3>
-    <div id="temp">--°C</div>
-    <div id="desc">Carregando...</div>
-  </div>
-
-  <div class="bloco">
-    <h3>To-do</h3>
-    <ul id="tarefas"></ul>
-  </div>
-
-  <div class="bloco">
-    <h3>Calendário</h3>
-    <div id="mesAno"></div>
-    <table id="gradeCalendario"></table>
-  </div>
-
-  <div class="bloco">
-    <h3>Agendamentos</h3>
-    <ul id="detalhesAgendamentos"></ul>
-  </div>
-
+<div class="mensagem-alerta" id="mensagemAlerta">
+  <strong>Mensagem:</strong> <span id="mensagemTexto"></span>
 </div>
 
 <script>
@@ -75,105 +34,36 @@
     authDomain: "diphouse-control.firebaseapp.com",
     databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
     projectId: "diphouse-control",
-    storageBucket: "diphouse-control.firebasestorage.app",
+    storageBucket: "diphouse-control.appspot.com",
     messagingSenderId: "126387069829",
     appId: "1:126387069829:web:7e365252a98da884075aec"
   };
   firebase.initializeApp(firebaseConfig);
   var db = firebase.database();
 
-  // Relógio
-  function atualizaHora() {
-    var agora = new Date();
-    document.getElementById('hora').textContent = agora.toLocaleTimeString();
-  }
-  setInterval(atualizaHora, 1000);
-  atualizaHora();
+  var alerta = document.getElementById('mensagemAlerta');
+  var textoSpan = document.getElementById('mensagemTexto');
 
-  // Clima
-  var apiKey = 'f7ffe9a1155341c0f2a1882fb192257b';
-  fetch('https://api.openweathermap.org/data/2.5/weather?q=Sao Paulo&units=metric&appid=' + apiKey)
-    .then(r => r.json())
-    .then(d => {
-      document.getElementById('temp').textContent = Math.round(d.main.temp) + '°C';
-      document.getElementById('desc').textContent = d.weather[0].description;
-    });
-
-  // Tarefas abertas
-  function carregarTarefas() {
-    db.ref('tarefas').on('value', function(snapshot) {
-      var lista = document.getElementById('tarefas');
-      lista.innerHTML = '';
-      snapshot.forEach(function(child) {
-        if (child.val().status === 'Aberto') {
-          var li = document.createElement('li');
-          var checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.onchange = function() {
-            db.ref('tarefas/' + child.key).update({ status: 'Fechado' });
-          };
-          li.appendChild(checkbox);
-          li.appendChild(document.createTextNode(child.val().texto));
-          lista.appendChild(li);
-        }
-      });
-    });
-  }
-  carregarTarefas();
-
-  // Calendário
-  var categorias = { "Saúde": "#28a745", "Trabalho": "#007bff", "Lazer": "#ffc107" };
-
-  function renderCalendario(agendamentos) {
-    var now = new Date();
-    var mes = now.getMonth();
-    var ano = now.getFullYear();
-    document.getElementById('mesAno').innerText = now.toLocaleString('default', { month: 'long' }) + ' ' + ano;
-    var primeiro = new Date(ano, mes, 1).getDay();
-    var diasMes = new Date(ano, mes + 1, 0).getDate();
-    var dias = ['S','T','Q','Q','S','S','D'];
-    var tabela = '<tr>';
-    for (var d = 0; d < dias.length; d++) { tabela += '<th>' + dias[d] + '</th>'; }
-    tabela += '</tr><tr>';
-    for (var i = 0; i < primeiro; i++) tabela += '<td></td>';
-    for (var dia = 1; dia <= diasMes; dia++) {
-      var dataStr = ano + '-' + String(mes + 1).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
-      var cor = '';
-      for (var ag in agendamentos) {
-        if (agendamentos[ag].data === dataStr) {
-          cor = categorias[agendamentos[ag].categoria] || '#fff';
-          break;
-        }
+  db.ref('mensagemAtual').on('value', function(snapshot) {
+    var msg = snapshot.val();
+    if (msg) {
+      textoSpan.textContent = msg.texto;
+      alerta.style.display = 'block';
+      if (msg.som) {
+        tocarSom();
       }
-      var style = cor ? ' style="background:' + cor + ';border-radius:50%;"' : '';
-      tabela += '<td' + style + '>' + dia + '</td>';
-      if ((dia + primeiro) % 7 === 0) tabela += '</tr><tr>';
+    } else {
+      alerta.style.display = 'none';
     }
-    document.getElementById('gradeCalendario').innerHTML = tabela + '</tr>';
-  }
-
-  function listarDetalhes(agendamentos) {
-    var lista = document.getElementById('detalhesAgendamentos');
-    lista.innerHTML = '';
-    var now = new Date();
-    var mes = now.getMonth() + 1;
-    for (var ag in agendamentos) {
-      var data = agendamentos[ag].data;
-      var detalhe = agendamentos[ag].detalhe;
-      if (parseInt(data.split('-')[1]) === mes) {
-        var li = document.createElement('li');
-        li.textContent = data + ' - ' + detalhe;
-        lista.appendChild(li);
-      }
-    }
-  }
-
-  db.ref('agendamentos').on('value', function(snapshot) {
-    var agendamentos = {};
-    snapshot.forEach(function(child) { agendamentos[child.key] = child.val(); });
-    renderCalendario(agendamentos);
-    listarDetalhes(agendamentos);
   });
+
+  function tocarSom() {
+    var beep = new Audio('https://www.soundjay.com/button/beep-07.wav');
+    beep.play();
+    setTimeout(function() {
+      beep.pause();
+    }, 5000);
+  }
 </script>
 
 </body>
