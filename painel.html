@@ -2,9 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel Completo</title>
+  <title>Painel Completo - Melhorado</title>
   
-  <!-- ✅ iOS Standalone -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -28,10 +27,10 @@
       border-radius: 10px;
       padding: 10px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      font-size: 1.2em;
     }
     .mensagem-alerta {
       width: 100%;
@@ -51,6 +50,29 @@
       object-fit: cover;
       border-radius: 10px;
     }
+    .relogio-texto {
+      font-size: 3em;
+      font-weight: bold;
+    }
+    .clima-content {
+      text-align: center;
+    }
+    .calendario-content table {
+      width: 100%;
+      text-align: center;
+      border-collapse: collapse;
+    }
+    .calendario-content th, .calendario-content td {
+      padding: 8px;
+    }
+    .lista {
+      width: 100%;
+      text-align: left;
+    }
+    .lista h3 {
+      text-align: center;
+      margin: 0 0 10px;
+    }
   </style>
   
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -61,32 +83,38 @@
 
 <div class="painel">
 
-  <div class="bloco" style="grid-column: span 1; grid-row: span 1;" id="hora"></div>
   <div class="bloco" style="grid-column: span 1; grid-row: span 1;">
-    <div>
+    <div class="relogio-texto" id="hora"></div>
+  </div>
+
+  <div class="bloco" style="grid-column: span 1; grid-row: span 1;">
+    <div class="clima-content">
       <h3>Clima - São Paulo</h3>
       <div id="temp">--°C</div>
       <div id="desc">Carregando...</div>
     </div>
   </div>
+
   <div class="bloco" style="grid-column: span 2; grid-row: span 1;">
     <div class="mensagem-alerta" id="mensagemAlerta">Mensagem</div>
   </div>
 
   <div class="bloco" style="grid-column: span 2; grid-row: span 2;">
-    <div>
+    <div class="calendario-content">
       <h3 id="mesAno"></h3>
       <table id="gradeCalendario"></table>
     </div>
   </div>
+
   <div class="bloco" style="grid-column: span 1; grid-row: span 2;">
-    <div>
+    <div class="lista">
       <h3>Agendamentos</h3>
       <ul id="detalhesAgendamentos"></ul>
     </div>
   </div>
+
   <div class="bloco" style="grid-column: span 1; grid-row: span 2;">
-    <div>
+    <div class="lista">
       <h3>To-do</h3>
       <ul id="tarefas"></ul>
     </div>
@@ -132,7 +160,7 @@
       document.getElementById('desc').textContent = d.weather[0].description;
     });
 
-  // Mensagem com cor dinâmica
+  // Mensagem
   var alerta = document.getElementById('mensagemAlerta');
   var somTocando = false;
 
