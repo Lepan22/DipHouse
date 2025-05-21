@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <title>Painel</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Firebase -->
-  <!-- Inclua firebase.js acima -->
+  <script src="firebase.js"></script>
 </head>
 <body>
   <div class="painel">
@@ -38,7 +37,12 @@
   </div>
 
 <script>
-  // Relógio
+  var categorias = {
+    "Reunião": "#007bff",
+    "Festa": "#dc3545",
+    "Outro": "#28a745"
+  };
+
   function atualizaHora() {
     var agora = new Date();
     document.getElementById('hora').innerText = agora.toLocaleTimeString();
@@ -46,7 +50,6 @@
   setInterval(atualizaHora, 1000);
   atualizaHora();
 
-  // Clima
   var apiKey = 'YOUR_OPENWEATHERMAP_API_KEY';
   fetch('https://api.openweathermap.org/data/2.5/weather?q=Sao Paulo&units=metric&appid=' + apiKey)
     .then(function(r){ return r.json(); })
@@ -55,7 +58,6 @@
       document.getElementById('desc').innerText = d.weather[0].description;
     });
 
-  // Mensagem
   firebase.database().ref('mensagemAtual').on('value', function(snap){
     var msg = snap.val();
     if (msg && msg.som) {
@@ -65,7 +67,6 @@
     }
   });
 
-  // Tarefas
   firebase.database().ref('tarefas').on('value', function(snap){
     var ul = document.getElementById('tarefas');
     ul.innerHTML = '';
@@ -76,18 +77,6 @@
     });
   });
 
-  // Agenda (Eventos próximos) — simula lista
-  var hoje = new Date();
-  var agenda = document.getElementById('agenda');
-  for (var i = 0; i < 15; i++) {
-    var dia = new Date();
-    dia.setDate(hoje.getDate() + i);
-    var li = document.createElement('li');
-    li.textContent = dia.toDateString() + ' — Evento';
-    agenda.appendChild(li);
-  }
-
-  // Carrossel de fotos
   var fotos = [];
   firebase.storage().ref('fotos').listAll().then(function(res){
     res.items.forEach(function(item){
@@ -105,6 +94,81 @@
     }
   }
   setInterval(trocaFoto, 5000);
+
+  function renderCalendario(eventos) {
+    var now = new Date();
+    var mes = now.getMonth();
+    var ano = now.getFullYear();
+    document.getElementById('mesAno').innerText = now.toLocaleString('default', { month: 'long' }) + " " + ano;
+
+    var primeiro = new Date(ano, mes, 1).getDay();
+    var diasMes = new Date(ano, mes + 1, 0).getDate();
+
+    var tabela = '<tr>';
+    var dias = ['S','M','T','W','T','F','S'];
+    for(var d = 0; d < dias.length; d++) {
+      tabela += '<th>' + dias[d] + '</th>';
+    }
+    tabela += '</tr><tr>';
+
+    for(var i = 0; i < primeiro; i++) tabela += '<td></td>';
+
+    for(var dia = 1; dia <= diasMes; dia++) {
+      var dataStr = ano + '-' + String(mes+1).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
+
+      var cor = '';
+      for(var ev in eventos){
+        if(eventos[ev].data == dataStr){
+          var cat = eventos[ev].categoria || 'Outro';
+          cor = categorias[cat] || categorias['Outro'];
+          break;
+        }
+      }
+
+      var style = '';
+      if(cor) style = ' style="background:'+cor+';color:#fff;border-radius:50%;"';
+
+      if(dia == now.getDate()) style += ' style="font-weight:bold;text-decoration:underline;"';
+
+      tabela += '<td'+style+'>'+dia+'</td>';
+
+      if((dia + primeiro)%7 == 0) tabela += '</tr><tr>';
+    }
+
+    document.getElementById('gradeCalendario').innerHTML = tabela + '</tr>';
+  }
+
+  firebase.database().ref('eventos').once('value').then(function(snap){
+    var eventos = {};
+    snap.forEach(function(child){
+      eventos[child.key] = child.val();
+    });
+
+    renderCalendario(eventos);
+
+    var hoje = new Date();
+    var agenda = document.getElementById('agenda');
+    agenda.innerHTML = '';
+    for (var i = 0; i < 15; i++) {
+      var dia = new Date();
+      dia.setDate(hoje.getDate() + i);
+      var dataStr = dia.toISOString().split('T')[0];
+      var encontrado = false;
+      for(var ev in eventos){
+        if(eventos[ev].data == dataStr){
+          var li = document.createElement('li');
+          li.textContent = dataStr + ' — ' + eventos[ev].categoria;
+          agenda.appendChild(li);
+          encontrado = true;
+        }
+      }
+      if(!encontrado){
+        var li = document.createElement('li');
+        li.textContent = dataStr + ' — (sem evento)';
+        agenda.appendChild(li);
+      }
+    }
+  });
 </script>
 </body>
 </html>
