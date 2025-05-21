@@ -33,13 +33,25 @@
 <ul id="listaTarefas"></ul>
 
 <script>
+  var editKey = null;
+
   function salvarTarefa() {
     var texto = document.getElementById('tarefaTexto').value;
     var status = document.getElementById('tarefaStatus').checked ? 'Aberto' : 'Fechado';
-    db.ref('tarefas').push({
-      texto: texto,
-      status: status
-    });
+    
+    if (editKey) {
+      db.ref('tarefas/' + editKey).update({
+        texto: texto,
+        status: status
+      });
+      editKey = null;
+    } else {
+      db.ref('tarefas').push({
+        texto: texto,
+        status: status
+      });
+    }
+    
     document.getElementById('tarefaTexto').value = '';
     document.getElementById('tarefaStatus').checked = true;
   }
@@ -51,18 +63,13 @@
       snapshot.forEach(function(child) {
         var li = document.createElement('li');
         li.textContent = child.val().texto + ' (' + child.val().status + ') ';
-
+        
         var btnEditar = document.createElement('button');
         btnEditar.textContent = 'Editar';
         btnEditar.onclick = function() {
-          var novoTexto = prompt('Novo texto:', child.val().texto);
-          var novoStatus = confirm('Marcar como Aberto?') ? 'Aberto' : 'Fechado';
-          if (novoTexto !== null) {
-            db.ref('tarefas/' + child.key).update({
-              texto: novoTexto,
-              status: novoStatus
-            });
-          }
+          document.getElementById('tarefaTexto').value = child.val().texto;
+          document.getElementById('tarefaStatus').checked = (child.val().status === 'Aberto');
+          editKey = child.key;
         };
 
         var btnExcluir = document.createElement('button');
