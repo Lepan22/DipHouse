@@ -13,6 +13,4 @@
     measurementId: "G-TFRB580278"
   };
   firebase.initializeApp(firebaseConfig);
-  var database = firebase.database();
-  var storage = firebase.storage();
 </script>
