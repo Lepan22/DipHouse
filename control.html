@@ -6,20 +6,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-  <script>
-    var firebaseConfig = {
-      apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
-      authDomain: "diphouse-control.firebaseapp.com",
-      databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
-      projectId: "diphouse-control",
-      storageBucket: "diphouse-control.appspot.com",
-      messagingSenderId: "126387069829",
-      appId: "1:126387069829:web:7e365252a98da884075aec"
-    };
-    firebase.initializeApp(firebaseConfig);
-    var db = firebase.database();
-    var storage = firebase.storage();
-  </script>
 </head>
 <body>
 
@@ -46,9 +32,12 @@
 <input type="date" id="agendamentoData">
 <input type="text" id="agendamentoDetalhe" placeholder="Detalhe">
 <select id="agendamentoCategoria">
-  <option>Saúde</option>
-  <option>Trabalho</option>
-  <option>Lazer</option>
+  <option value="Escola">Escola</option>
+  <option value="Esporte">Esporte</option>
+  <option value="Saude">Saúde</option>
+  <option value="Lazer">Lazer</option>
+  <option value="Viagem">Viagem</option>
+  <option value="Outras">Outras</option>
 </select>
 <button onclick="salvarAgendamento()">Salvar</button>
 <ul id="listaAgendamentos"></ul>
@@ -59,123 +48,137 @@
 <ul id="listaFotos"></ul>
 
 <script>
-  // Mensagem
-  function enviarMensagem() {
-    var texto = document.getElementById('mensagemTexto').value;
-    var som = document.getElementById('mensagemSom').checked;
-    db.ref('mensagemAtual').set({ texto: texto, som: som });
-  }
-  function apagarMensagem() {
-    db.ref('mensagemAtual').remove();
-  }
+var firebaseConfig = {
+  apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
+  authDomain: "diphouse-control.firebaseapp.com",
+  databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
+  projectId: "diphouse-control",
+  storageBucket: "diphouse-control.appspot.com",
+  messagingSenderId: "126387069829",
+  appId: "1:126387069829:web:7e365252a98da884075aec"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+var storage = firebase.storage();
 
-  // Tarefas
-  var editTarefaKey = null;
-  function salvarTarefa() {
-    var texto = document.getElementById('tarefaTexto').value;
-    var status = document.getElementById('tarefaStatus').checked ? 'Aberto' : 'Fechado';
-    if (editTarefaKey) {
-      db.ref('tarefas/' + editTarefaKey).update({ texto: texto, status: status });
-      editTarefaKey = null;
-    } else {
-      db.ref('tarefas').push({ texto: texto, status: status });
-    }
-    document.getElementById('tarefaTexto').value = '';
+// Mensagem
+function enviarMensagem() {
+  var texto = document.getElementById('mensagemTexto').value;
+  var som = document.getElementById('mensagemSom').checked;
+  db.ref('mensagemAtual').set({ texto: texto, som: som });
+}
+function apagarMensagem() {
+  db.ref('mensagemAtual').remove();
+}
+
+// Tarefas
+var editTarefaKey = null;
+function salvarTarefa() {
+  var texto = document.getElementById('tarefaTexto').value;
+  var status = document.getElementById('tarefaStatus').checked ? 'Aberto' : 'Fechado';
+  if (editTarefaKey) {
+    db.ref('tarefas/' + editTarefaKey).update({ texto, status });
+    editTarefaKey = null;
+  } else {
+    db.ref('tarefas').push({ texto, status });
   }
-  db.ref('tarefas').on('value', function(snapshot) {
-    var lista = document.getElementById('listaTarefas');
-    lista.innerHTML = '';
-    snapshot.forEach(function(child) {
+  document.getElementById('tarefaTexto').value = '';
+}
+db.ref('tarefas').on('value', function(snapshot) {
+  var lista = document.getElementById('listaTarefas');
+  lista.innerHTML = '';
+  snapshot.forEach(function(child) {
+    var li = document.createElement('li');
+    li.textContent = child.val().texto + ' (' + child.val().status + ') ';
+    var btnEditar = document.createElement('button');
+    btnEditar.textContent = 'Editar';
+    btnEditar.onclick = function() {
+      document.getElementById('tarefaTexto').value = child.val().texto;
+      document.getElementById('tarefaStatus').checked = (child.val().status === 'Aberto');
+      editTarefaKey = child.key;
+    };
+    var btnExcluir = document.createElement('button');
+    btnExcluir.textContent = 'Excluir';
+    btnExcluir.onclick = function() {
+      db.ref('tarefas/' + child.key).remove();
+    };
+    li.appendChild(btnEditar);
+    li.appendChild(btnExcluir);
+    lista.appendChild(li);
+  });
+});
+
+// Agendamentos
+var editAgendamentoKey = null;
+function salvarAgendamento() {
+  var data = document.getElementById('agendamentoData').value;
+  var detalhe = document.getElementById('agendamentoDetalhe').value;
+  var categoria = document.getElementById('agendamentoCategoria').value;
+  if (editAgendamentoKey) {
+    db.ref('agendamentos/' + editAgendamentoKey).update({ data, detalhe, categoria });
+    editAgendamentoKey = null;
+  } else {
+    db.ref('agendamentos').push({ data, detalhe, categoria });
+  }
+  document.getElementById('agendamentoData').value = '';
+  document.getElementById('agendamentoDetalhe').value = '';
+}
+db.ref('agendamentos').on('value', function(snapshot) {
+  var lista = document.getElementById('listaAgendamentos');
+  lista.innerHTML = '';
+  snapshot.forEach(function(child) {
+    var li = document.createElement('li');
+    li.textContent = child.val().data + ' - ' + child.val().detalhe + ' (' + child.val().categoria + ') ';
+    var btnEditar = document.createElement('button');
+    btnEditar.textContent = 'Editar';
+    btnEditar.onclick = function() {
+      document.getElementById('agendamentoData').value = child.val().data;
+      document.getElementById('agendamentoDetalhe').value = child.val().detalhe;
+      document.getElementById('agendamentoCategoria').value = child.val().categoria;
+      editAgendamentoKey = child.key;
+    };
+    var btnExcluir = document.createElement('button');
+    btnExcluir.textContent = 'Excluir';
+    btnExcluir.onclick = function() {
+      db.ref('agendamentos/' + child.key).remove();
+    };
+    li.appendChild(btnEditar);
+    li.appendChild(btnExcluir);
+    lista.appendChild(li);
+  });
+});
+
+// Upload de fotos
+function uploadFoto() {
+  var file = document.getElementById('fotoFile').files[0];
+  if (!file) return alert('Selecione uma foto!');
+  var storageRef = storage.ref('fotos/' + file.name);
+  storageRef.put(file).then(function() {
+    alert('Foto enviada!');
+    listarFotos();
+  });
+}
+function listarFotos() {
+  var lista = document.getElementById('listaFotos');
+  lista.innerHTML = '';
+  storage.ref('fotos').listAll().then(function(res) {
+    res.items.forEach(function(itemRef) {
       var li = document.createElement('li');
-      li.textContent = child.val().texto + ' (' + child.val().status + ') ';
-      var btnEditar = document.createElement('button');
-      btnEditar.textContent = 'Editar';
-      btnEditar.onclick = function() {
-        document.getElementById('tarefaTexto').value = child.val().texto;
-        document.getElementById('tarefaStatus').checked = (child.val().status === 'Aberto');
-        editTarefaKey = child.key;
-      };
+      li.textContent = itemRef.name + ' ';
       var btnExcluir = document.createElement('button');
       btnExcluir.textContent = 'Excluir';
       btnExcluir.onclick = function() {
-        db.ref('tarefas/' + child.key).remove();
+        itemRef.delete().then(function() {
+          alert('Foto excluída!');
+          listarFotos();
+        });
       };
-      li.appendChild(btnEditar);
       li.appendChild(btnExcluir);
       lista.appendChild(li);
     });
   });
-
-  // Agendamentos
-  var editAgendamentoKey = null;
-  function salvarAgendamento() {
-    var data = document.getElementById('agendamentoData').value;
-    var detalhe = document.getElementById('agendamentoDetalhe').value;
-    var categoria = document.getElementById('agendamentoCategoria').value;
-    if (editAgendamentoKey) {
-      db.ref('agendamentos/' + editAgendamentoKey).update({ data: data, detalhe: detalhe, categoria: categoria });
-      editAgendamentoKey = null;
-    } else {
-      db.ref('agendamentos').push({ data: data, detalhe: detalhe, categoria: categoria });
-    }
-    document.getElementById('agendamentoData').value = '';
-    document.getElementById('agendamentoDetalhe').value = '';
-  }
-  db.ref('agendamentos').on('value', function(snapshot) {
-    var lista = document.getElementById('listaAgendamentos');
-    lista.innerHTML = '';
-    snapshot.forEach(function(child) {
-      var li = document.createElement('li');
-      li.textContent = child.val().data + ' - ' + child.val().detalhe + ' (' + child.val().categoria + ') ';
-      var btnEditar = document.createElement('button');
-      btnEditar.textContent = 'Editar';
-      btnEditar.onclick = function() {
-        document.getElementById('agendamentoData').value = child.val().data;
-        document.getElementById('agendamentoDetalhe').value = child.val().detalhe;
-        document.getElementById('agendamentoCategoria').value = child.val().categoria;
-        editAgendamentoKey = child.key;
-      };
-      var btnExcluir = document.createElement('button');
-      btnExcluir.textContent = 'Excluir';
-      btnExcluir.onclick = function() {
-        db.ref('agendamentos/' + child.key).remove();
-      };
-      li.appendChild(btnEditar);
-      li.appendChild(btnExcluir);
-      lista.appendChild(li);
-    });
-  });
-
-  // Upload de Fotos
-  function uploadFoto() {
-    var file = document.getElementById('fotoFile').files[0];
-    if (!file) return alert('Selecione uma foto!');
-    var storageRef = storage.ref('fotos/' + file.name);
-    storageRef.put(file).then(function() {
-      alert('Foto enviada!');
-      listarFotos();
-    });
-  }
-  function listarFotos() {
-    var lista = document.getElementById('listaFotos');
-    lista.innerHTML = '';
-    storage.ref('fotos').listAll().then(function(res) {
-      res.items.forEach(function(itemRef) {
-        var li = document.createElement('li');
-        li.textContent = itemRef.name + ' ';
-        var btnExcluir = document.createElement('button');
-        btnExcluir.textContent = 'Excluir';
-        btnExcluir.onclick = function() {
-          itemRef.delete().then(function() {
-            alert('Foto excluída!');
-            listarFotos();
-          });
-        };
-        lista.appendChild(li);
-      });
-    });
-  }
-  listarFotos();
+}
+listarFotos();
 </script>
 
 </body>
