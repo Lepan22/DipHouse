@@ -98,18 +98,6 @@
       list-style: disc;
       width: 100%;
     }
-    .btn-atualizar {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #555;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      z-index: 999;
-    }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -117,8 +105,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 </head>
 <body>
-
-<button class="btn-atualizar" onclick="location.reload()">Atualizar</button>
 
 <div class="painel">
 
@@ -316,6 +302,9 @@ function trocarFoto() {
     idx = (idx + 1) % fotos.length;
   }
 }
+
+// Auto-refresh a cada 120 segundos
+setInterval(() => location.reload(), 120000);
 </script>
 
 </body>
