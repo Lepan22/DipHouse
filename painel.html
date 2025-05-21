@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel Completo - Ajustado</title>
+  <title>Painel Completo - Final</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -72,30 +72,31 @@
       align-items: center;
     }
     .calendario-content table {
-      width: 90%;
+      width: 80%;
       text-align: center;
       border-collapse: collapse;
-      font-size: 1.2em;
+      font-size: 1em;
     }
     .calendario-content th, .calendario-content td {
-      padding: 8px;
+      padding: 6px;
     }
     .lista {
       width: 100%;
       text-align: left;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       justify-content: flex-start;
+      height: 100%;
     }
     .lista h3 {
       text-align: center;
-      width: 100%;
       margin: 0 0 10px 0;
     }
     .lista ul {
       padding-left: 20px;
       list-style: disc;
+      width: 100%;
     }
   </style>
 
@@ -149,7 +150,6 @@
   </div>
 
   <div class="bloco" style="grid-column: span 2; grid-row: span 2;">
-    Futuro
   </div>
 
 </div>
@@ -168,7 +168,6 @@
   var db = firebase.database();
   var storage = firebase.storage();
 
-  // Relógio
   function atualizaHora() {
     var agora = new Date();
     document.getElementById('hora').textContent = agora.toLocaleTimeString();
@@ -176,7 +175,6 @@
   setInterval(atualizaHora, 1000);
   atualizaHora();
 
-  // Clima
   fetch('https://api.openweathermap.org/data/2.5/weather?q=Sao Paulo&units=metric&appid=f7ffe9a1155341c0f2a1882fb192257b')
     .then(r => r.json())
     .then(d => {
@@ -184,7 +182,6 @@
       document.getElementById('desc').textContent = d.weather[0].description;
     });
 
-  // Mensagem
   var alerta = document.getElementById('mensagemAlerta');
   var somTocando = false;
 
@@ -209,7 +206,6 @@
     alerta.style.color = '#000';
   });
 
-  // Tarefas
   db.ref('tarefas').on('value', function(snapshot) {
     var lista = document.getElementById('tarefas');
     lista.innerHTML = '';
@@ -228,7 +224,6 @@
     });
   });
 
-  // Calendário + Agendamentos
   var categorias = { "Saúde": "#28a745", "Trabalho": "#007bff", "Lazer": "#ffc107" };
 
   function renderCalendario(agendamentos) {
@@ -283,7 +278,6 @@
     listarDetalhes(agendamentos);
   });
 
-  // Carrossel
   var fotos = [], idx = 0;
   storage.ref('fotos').listAll().then(function(res) {
     var promises = res.items.map(function(itemRef) {
