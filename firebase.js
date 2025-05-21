@@ -1,16 +1,146 @@
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Controle</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
+      authDomain: "diphouse-control.firebaseapp.com",
+      databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
+      projectId: "diphouse-control",
+      storageBucket: "diphouse-control.firebasestorage.app",
+      messagingSenderId: "126387069829",
+      appId: "1:126387069829:web:7e365252a98da884075aec"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+  </script>
+</head>
+<body>
+
+<h1>Controle de Tarefas</h1>
+
+<input type="text" id="tarefaTexto" placeholder="Tarefa">
+<label>
+  <input type="checkbox" id="tarefaStatus" checked> Aberto
+</label>
+<button onclick="salvarTarefa()">Salvar</button>
+
+<ul id="listaTarefas"></ul>
+
+<hr>
+
+<h1>Controle de Agendamentos</h1>
+
+<input type="date" id="agendamentoData">
+<input type="text" id="agendamentoDetalhe" placeholder="Detalhe">
+<select id="agendamentoCategoria">
+  <option>Saúde</option>
+  <option>Trabalho</option>
+  <option>Lazer</option>
+</select>
+<button onclick="salvarAgendamento()">Salvar</button>
+
+<ul id="listaAgendamentos"></ul>
+
 <script>
-  var firebaseConfig = {
-    apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
-    authDomain: "diphouse-control.firebaseapp.com",
-    databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
-    projectId: "diphouse-control",
-    storageBucket: "diphouse-control.firebasestorage.app",
-    messagingSenderId: "126387069829",
-    appId: "1:126387069829:web:7e365252a98da884075aec",
-    measurementId: "G-TFRB580278"
-  };
-  firebase.initializeApp(firebaseConfig);
+  // --- Tarefas ---
+  var editTarefaKey = null;
+
+  function salvarTarefa() {
+    var texto = document.getElementById('tarefaTexto').value;
+    var status = document.getElementById('tarefaStatus').checked ? 'Aberto' : 'Fechado';
+
+    if (editTarefaKey) {
+      db.ref('tarefas/' + editTarefaKey).update({ texto: texto, status: status });
+      editTarefaKey = null;
+    } else {
+      db.ref('tarefas').push({ texto: texto, status: status });
+    }
+
+    document.getElementById('tarefaTexto').value = '';
+    document.getElementById('tarefaStatus').checked = true;
+  }
+
+  function listarTarefas() {
+    db.ref('tarefas').on('value', function(snapshot) {
+      var lista = document.getElementById('listaTarefas');
+      lista.innerHTML = '';
+      snapshot.forEach(function(child) {
+        var li = document.createElement('li');
+        li.textContent = child.val().texto + ' (' + child.val().status + ') ';
+        var btnEditar = document.createElement('button');
+        btnEditar.textContent = 'Editar';
+        btnEditar.onclick = function() {
+          document.getElementById('tarefaTexto').value = child.val().texto;
+          document.getElementById('tarefaStatus').checked = (child.val().status === 'Aberto');
+          editTarefaKey = child.key;
+        };
+        var btnExcluir = document.createElement('button');
+        btnExcluir.textContent = 'Excluir';
+        btnExcluir.onclick = function() {
+          db.ref('tarefas/' + child.key).remove();
+        };
+        li.appendChild(btnEditar);
+        li.appendChild(btnExcluir);
+        lista.appendChild(li);
+      });
+    });
+  }
+
+  listarTarefas();
+
+  // --- Agendamentos ---
+  var editAgendamentoKey = null;
+
+  function salvarAgendamento() {
+    var data = document.getElementById('agendamentoData').value;
+    var detalhe = document.getElementById('agendamentoDetalhe').value;
+    var categoria = document.getElementById('agendamentoCategoria').value;
+
+    if (editAgendamentoKey) {
+      db.ref('agendamentos/' + editAgendamentoKey).update({ data: data, detalhe: detalhe, categoria: categoria });
+      editAgendamentoKey = null;
+    } else {
+      db.ref('agendamentos').push({ data: data, detalhe: detalhe, categoria: categoria });
+    }
+
+    document.getElementById('agendamentoData').value = '';
+    document.getElementById('agendamentoDetalhe').value = '';
+  }
+
+  function listarAgendamentos() {
+    db.ref('agendamentos').on('value', function(snapshot) {
+      var lista = document.getElementById('listaAgendamentos');
+      lista.innerHTML = '';
+      snapshot.forEach(function(child) {
+        var li = document.createElement('li');
+        li.textContent = child.val().data + ' - ' + child.val().detalhe + ' (' + child.val().categoria + ') ';
+        var btnEditar = document.createElement('button');
+        btnEditar.textContent = 'Editar';
+        btnEditar.onclick = function() {
+          document.getElementById('agendamentoData').value = child.val().data;
+          document.getElementById('agendamentoDetalhe').value = child.val().detalhe;
+          document.getElementById('agendamentoCategoria').value = child.val().categoria;
+          editAgendamentoKey = child.key;
+        };
+        var btnExcluir = document.createElement('button');
+        btnExcluir.textContent = 'Excluir';
+        btnExcluir.onclick = function() {
+          db.ref('agendamentos/' + child.key).remove();
+        };
+        li.appendChild(btnEditar);
+        li.appendChild(btnExcluir);
+        lista.appendChild(li);
+      });
+    });
+  }
+
+  listarAgendamentos();
 </script>
+
+</body>
+</html>
