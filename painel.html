@@ -98,6 +98,10 @@
       list-style: disc;
       width: 100%;
     }
+    .riscado {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -264,15 +268,28 @@ function renderCalendario(agendamentos) {
 function listarDetalhes(agendamentos) {
   var lista = document.getElementById('detalhesAgendamentos');
   lista.innerHTML = '';
-  for (var ag in agendamentos) {
-    var data = agendamentos[ag].data;
-    var detalhe = agendamentos[ag].detalhe;
-    var dataObj = new Date(data);
+
+  // Transformar agendamentos em array e ordenar
+  var ags = Object.values(agendamentos);
+  ags.sort(function(a, b) {
+    return new Date(a.data) - new Date(b.data);
+  });
+
+  var hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  // Remover antigos se passar de 10
+  var futuros = ags.filter(ag => new Date(ag.data) >= hoje);
+  var mostrar = futuros.length > 10 ? futuros.slice(0,10) : ags.slice(0,10);
+
+  mostrar.forEach(function(ag) {
+    var dataObj = new Date(ag.data);
     var dataFormatada = ("0" + dataObj.getDate()).slice(-2) + "/" + ("0" + (dataObj.getMonth() + 1)).slice(-2);
     var li = document.createElement('li');
-    li.textContent = dataFormatada + ' - ' + detalhe;
+    li.textContent = dataFormatada + ' - ' + ag.detalhe;
+    if (dataObj < hoje) li.classList.add('riscado');
     lista.appendChild(li);
-  }
+  });
 }
 
 db.ref('agendamentos').on('value', function(snapshot) {
