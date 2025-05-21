@@ -1,69 +1,36 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Painel Visual</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #111;
-      color: #fff;
-    }
-    .painel {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-      padding: 20px;
-    }
-    .bloco {
-      background: #222;
-      padding: 15px;
-      border-radius: 10px;
-    }
-    h3 {
-      margin-top: 0;
-    }
-  </style>
-</head>
-<body>
-
-<div class="painel">
-  <div class="bloco">
-    <h3>Relógio</h3>
-    <div id="hora" style="font-size:2em;"></div>
-  </div>
-
-  <div class="bloco">
-    <h3>Clima - São Paulo</h3>
-    <div id="temp">--°C</div>
-    <div id="desc">Carregando...</div>
-  </div>
+<div class="bloco">
+  <h3>To-do</h3>
+  <ul id="tarefas"></ul>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script>
-  // ✅ Relógio
-  function atualizaHora() {
-    var agora = new Date();
-    document.getElementById('hora').textContent = agora.toLocaleTimeString();
-  }
-  setInterval(atualizaHora, 1000);
-  atualizaHora();
+  var firebaseConfig = {
+    apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
+    authDomain: "diphouse-control.firebaseapp.com",
+    databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
+    projectId: "diphouse-control",
+    storageBucket: "diphouse-control.firebasestorage.app",
+    messagingSenderId: "126387069829",
+    appId: "1:126387069829:web:7e365252a98da884075aec"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.database();
 
-  // ✅ Clima - OpenWeatherMap
-  var apiKey = 'f7ffe9a1155341c0f2a1882fb192257b';
-
-  fetch('https://api.openweathermap.org/data/2.5/weather?q=Sao Paulo&units=metric&appid=' + apiKey)
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-      document.getElementById('temp').textContent = Math.round(data.main.temp) + '°C';
-      document.getElementById('desc').textContent = data.weather[0].description;
-    })
-    .catch(function(error) {
-      document.getElementById('desc').textContent = 'Erro ao carregar clima';
-      console.error('Erro clima:', error);
+  function carregarTarefas() {
+    db.ref('tarefas').on('value', function(snapshot) {
+      var lista = document.getElementById('tarefas');
+      lista.innerHTML = '';
+      snapshot.forEach(function(child) {
+        if (child.val().status === 'Aberto') {
+          var li = document.createElement('li');
+          li.textContent = child.val().texto;
+          lista.appendChild(li);
+        }
+      });
     });
-</script>
+  }
 
-</body>
-</html>
+  carregarTarefas();
+</script>
