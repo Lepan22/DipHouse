@@ -2,81 +2,86 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Controle</title>
-  <!-- Firebase -->
-  <script src="firebase.js"></script>
+  <title>Controle de Tarefas</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
+      authDomain: "diphouse-control.firebaseapp.com",
+      databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
+      projectId: "diphouse-control",
+      storageBucket: "diphouse-control.firebasestorage.app",
+      messagingSenderId: "126387069829",
+      appId: "1:126387069829:web:7e365252a98da884075aec"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+  </script>
 </head>
 <body>
-  <h1>Controle</h1>
 
-  <h2>Mensagem</h2>
-  <input type="text" id="msgTexto" placeholder="Mensagem">
-  <label><input type="checkbox" id="msgSom"> Som</label>
-  <button onclick="enviarMsg()">Enviar</button>
-  <button onclick="apagarMsg()">Apagar</button>
+<h1>Controle de Tarefas</h1>
 
-  <h2>Tarefas</h2>
-  <input type="text" id="tarefaTexto" placeholder="Tarefa">
-  <button onclick="addTarefa()">Adicionar</button>
-  <ul id="listaTarefas"></ul>
+<input type="text" id="tarefaTexto" placeholder="Tarefa">
+<label>
+  <input type="checkbox" id="tarefaStatus" checked> Aberto
+</label>
+<button onclick="salvarTarefa()">Salvar</button>
 
-  <h2>Fotos</h2>
-  <input type="file" id="fotoFile">
-  <button onclick="uploadFoto()">Enviar Foto</button>
-
-  <h2>Eventos</h2>
-  <input type="date" id="dataEvento">
-  <input type="text" id="categoriaEvento" placeholder="Categoria">
-  <button onclick="addEvento()">Adicionar Evento</button>
-  <ul id="listaEventos"></ul>
+<h2>Lista de Tarefas</h2>
+<ul id="listaTarefas"></ul>
 
 <script>
-  function enviarMsg() {
-    var texto = document.getElementById('msgTexto').value;
-    var som = document.getElementById('msgSom').checked;
-    firebase.database().ref('mensagemAtual').set({ texto: texto, som: som });
-  }
-
-  function apagarMsg() {
-    firebase.database().ref('mensagemAtual').remove();
-  }
-
-  function addTarefa() {
+  function salvarTarefa() {
     var texto = document.getElementById('tarefaTexto').value;
-    firebase.database().ref('tarefas').push({ texto: texto });
-  }
-
-  firebase.database().ref('tarefas').on('value', function(snapshot) {
-    var lista = document.getElementById('listaTarefas');
-    lista.innerHTML = '';
-    snapshot.forEach(function(child) {
-      var li = document.createElement('li');
-      li.textContent = child.val().texto;
-      lista.appendChild(li);
+    var status = document.getElementById('tarefaStatus').checked ? 'Aberto' : 'Fechado';
+    db.ref('tarefas').push({
+      texto: texto,
+      status: status
     });
-  });
-
-  function uploadFoto() {
-    var file = document.getElementById('fotoFile').files[0];
-    var storageRef = firebase.storage().ref('fotos/' + file.name);
-    storageRef.put(file).then(function() { alert('Foto enviada!'); });
+    document.getElementById('tarefaTexto').value = '';
+    document.getElementById('tarefaStatus').checked = true;
   }
 
-  function addEvento() {
-    var data = document.getElementById('dataEvento').value;
-    var categoria = document.getElementById('categoriaEvento').value;
-    firebase.database().ref('eventos').push({ data: data, categoria: categoria });
-  }
+  function listarTarefas() {
+    db.ref('tarefas').on('value', function(snapshot) {
+      var lista = document.getElementById('listaTarefas');
+      lista.innerHTML = '';
+      snapshot.forEach(function(child) {
+        var li = document.createElement('li');
+        li.textContent = child.val().texto + ' (' + child.val().status + ') ';
 
-  firebase.database().ref('eventos').on('value', function(snapshot) {
-    var lista = document.getElementById('listaEventos');
-    lista.innerHTML = '';
-    snapshot.forEach(function(child) {
-      var li = document.createElement('li');
-      li.textContent = child.val().data + ' — ' + child.val().categoria;
-      lista.appendChild(li);
+        var btnEditar = document.createElement('button');
+        btnEditar.textContent = 'Editar';
+        btnEditar.onclick = function() {
+          var novoTexto = prompt('Novo texto:', child.val().texto);
+          var novoStatus = confirm('Marcar como Aberto?') ? 'Aberto' : 'Fechado';
+          if (novoTexto !== null) {
+            db.ref('tarefas/' + child.key).update({
+              texto: novoTexto,
+              status: novoStatus
+            });
+          }
+        };
+
+        var btnExcluir = document.createElement('button');
+        btnExcluir.textContent = 'Excluir';
+        btnExcluir.onclick = function() {
+          if (confirm('Tem certeza?')) {
+            db.ref('tarefas/' + child.key).remove();
+          }
+        };
+
+        li.appendChild(btnEditar);
+        li.appendChild(btnExcluir);
+        lista.appendChild(li);
+      });
     });
-  });
+  }
+
+  listarTarefas();
 </script>
+
 </body>
 </html>
