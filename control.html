@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <title>Controle</title>
   <!-- Firebase -->
-  <!-- Inclua firebase.js acima -->
-
+  <script src="firebase.js"></script>
 </head>
 <body>
   <h1>Controle</h1>
@@ -24,6 +23,12 @@
   <h2>Fotos</h2>
   <input type="file" id="fotoFile">
   <button onclick="uploadFoto()">Enviar Foto</button>
+
+  <h2>Eventos</h2>
+  <input type="date" id="dataEvento">
+  <input type="text" id="categoriaEvento" placeholder="Categoria">
+  <button onclick="addEvento()">Adicionar Evento</button>
+  <ul id="listaEventos"></ul>
 
 <script>
   function enviarMsg() {
@@ -56,6 +61,22 @@
     var storageRef = firebase.storage().ref('fotos/' + file.name);
     storageRef.put(file).then(function() { alert('Foto enviada!'); });
   }
+
+  function addEvento() {
+    var data = document.getElementById('dataEvento').value;
+    var categoria = document.getElementById('categoriaEvento').value;
+    firebase.database().ref('eventos').push({ data: data, categoria: categoria });
+  }
+
+  firebase.database().ref('eventos').on('value', function(snapshot) {
+    var lista = document.getElementById('listaEventos');
+    lista.innerHTML = '';
+    snapshot.forEach(function(child) {
+      var li = document.createElement('li');
+      li.textContent = child.val().data + ' — ' + child.val().categoria;
+      lista.appendChild(li);
+    });
+  });
 </script>
 </body>
 </html>
