@@ -98,6 +98,18 @@
       list-style: disc;
       width: 100%;
     }
+    .btn-atualizar {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #555;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      z-index: 999;
+    }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -105,6 +117,8 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 </head>
 <body>
+
+<button class="btn-atualizar" onclick="location.reload()">Atualizar</button>
 
 <div class="painel">
 
@@ -168,7 +182,6 @@ firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 var storage = firebase.storage();
 
-// Relógio
 function atualizaHora() {
   var agora = new Date();
   document.getElementById('hora').textContent = agora.toLocaleTimeString();
@@ -176,7 +189,6 @@ function atualizaHora() {
 setInterval(atualizaHora, 1000);
 atualizaHora();
 
-// Clima
 fetch('https://api.openweathermap.org/data/2.5/weather?q=Sao Paulo&units=metric&appid=f7ffe9a1155341c0f2a1882fb192257b')
 .then(r => r.json())
 .then(d => {
@@ -184,7 +196,6 @@ fetch('https://api.openweathermap.org/data/2.5/weather?q=Sao Paulo&units=metric&
   document.getElementById('desc').textContent = d.weather[0].description;
 });
 
-// Mensagem
 var alerta = document.getElementById('mensagemAlerta');
 var somTocando = false;
 db.ref('mensagemAtual').on('value', function(snapshot) {
@@ -207,7 +218,6 @@ alerta.addEventListener('click', function() {
   alerta.style.color = '#000';
 });
 
-// Tarefas
 db.ref('tarefas').on('value', function(snapshot) {
   var lista = document.getElementById('tarefas');
   lista.innerHTML = '';
@@ -226,7 +236,6 @@ db.ref('tarefas').on('value', function(snapshot) {
   });
 });
 
-// Agendamentos e Calendário
 var categorias = {
   "Escola": "#ff6666",
   "Esporte": "#66b3ff",
@@ -272,11 +281,10 @@ function listarDetalhes(agendamentos) {
   for (var ag in agendamentos) {
     var data = agendamentos[ag].data;
     var detalhe = agendamentos[ag].detalhe;
-    var categoria = agendamentos[ag].categoria;
     var dataObj = new Date(data);
     var dataFormatada = ("0" + dataObj.getDate()).slice(-2) + "/" + ("0" + (dataObj.getMonth() + 1)).slice(-2);
     var li = document.createElement('li');
-    li.textContent = dataFormatada + ' - ' + detalhe + ' (' + categoria + ')';
+    li.textContent = dataFormatada + ' - ' + detalhe;
     lista.appendChild(li);
   }
 }
@@ -288,7 +296,6 @@ db.ref('agendamentos').on('value', function(snapshot) {
   listarDetalhes(agendamentos);
 });
 
-// Carrossel
 var fotos = [], idx = 0;
 storage.ref('fotos').listAll().then(function(res) {
   var promises = res.items.map(function(itemRef) {
