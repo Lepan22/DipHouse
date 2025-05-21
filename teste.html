@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Preview Layout</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 10px;
+      height: 100vh;
+      padding: 10px;
+    }
+    .item {
+      background: #222;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2em;
+      text-align: center;
+    }
+    .relogio { grid-column: span 1; grid-row: span 1; }
+    .clima { grid-column: span 1; grid-row: span 1; }
+    .mensagem { grid-column: span 2; grid-row: span 1; background: #ff4d4d; }
+    .calendario { grid-column: span 2; grid-row: span 2; }
+    .agendamentos { grid-column: span 1; grid-row: span 2; }
+    .todo { grid-column: span 1; grid-row: span 2; }
+    .carrossel { grid-column: span 2; grid-row: span 2; }
+    .futuro { grid-column: span 2; grid-row: span 2; background: #333; }
+  </style>
+</head>
+<body>
+
+<div class="grid">
+  <div class="item relogio">Relógio</div>
+  <div class="item clima">Clima</div>
+  <div class="item mensagem">Mensagem</div>
+  <div class="item calendario">Calendário</div>
+  <div class="item agendamentos">Agendamentos</div>
+  <div class="item todo">To-do</div>
+  <div class="item carrossel">Carrossel</div>
+  <div class="item futuro">Futuro</div>
+</div>
+
+</body>
+</html>
