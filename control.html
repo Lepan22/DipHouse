@@ -11,7 +11,7 @@
       authDomain: "diphouse-control.firebaseapp.com",
       databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
       projectId: "diphouse-control",
-      storageBucket: "diphouse-control.appspot.com",
+      storageBucket: "diphouse-control.appspot.com", <!-- ✅ Correção aqui -->
       messagingSenderId: "126387069829",
       appId: "1:126387069829:web:7e365252a98da884075aec"
     };
@@ -34,9 +34,13 @@
     var file = document.getElementById('fotoFile').files[0];
     if (!file) return alert('Selecione uma foto!');
     var storageRef = storage.ref('fotos/' + file.name);
-    storageRef.put(file).then(function() {
-      alert('Foto enviada!');
+    
+    storageRef.put(file).then(function(snapshot) {
+      alert('Foto enviada com sucesso!');
       listarFotos();
+    }).catch(function(error) {
+      console.error('Erro ao enviar:', error);
+      alert('Erro ao enviar: ' + error.message);
     });
   }
 
