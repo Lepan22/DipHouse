@@ -1,87 +1,110 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Painel Diphouse</title>
-  <script type="module">
-    import { db, ref, onValue, storage, sRef, listAll, getDownloadURL } from './firebase.js';
-
-    const $ = (id) => document.getElementById(id);
-
-    // Relógio
-    function updateClock() {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      $('clock').textContent = `${h}:${m}`;
-      const greet = now.getHours() < 12 ? 'Bom dia' : now.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
-      $('greeting').textContent = greet;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // Clima
-    async function fetchWeather() {
-      const res = await fetch('https://wttr.in/Sao+Paulo?format=%t %C');
-      $('weatherContent').textContent = await res.text();
-    }
-    fetchWeather();
-
-    // Tarefas
-    onValue(ref(db, 'tarefas'), snap => {
-      const list = $('taskList');
-      list.innerHTML = '';
-      snap.forEach(item => {
-        list.innerHTML += `<li>${item.val().texto}</li>`;
-      });
-    });
-
-    // Agenda do dia
-    const hoje = new Date();
-    const diaHoje = `${String(hoje.getDate()).padStart(2, '0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`;
-    onValue(ref(db, 'eventos'), snap => {
-      const list = $('agendaList');
-      list.innerHTML = '';
-      snap.forEach(item => {
-        if (item.val().dia === diaHoje) {
-          list.innerHTML += `<li>${item.val().texto}</li>`;
-        }
-      });
-    });
-
-    // Carrossel de fotos
-    const img = $('photoImg');
-    listAll(sRef(storage, 'fotos')).then(async res => {
-      const urls = await Promise.all(res.items.map(getDownloadURL));
-      let i = 0;
-      setInterval(() => {
-        img.src = urls[i];
-        i = (i + 1) % urls.length;
-      }, 5000);
-    }).catch(() => {
-      img.src = 'fotos/foto1.png';
-    });
-  </script>
-
-  <style>
-    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
-    .box { margin: 10px 0; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Painel</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase -->
+  <!-- Inclua firebase.js acima -->
 </head>
 <body>
-  <h1>Painel Diphouse</h1>
-  <div class="box"><span id="clock">00:00</span> - <span id="greeting">...</span></div>
-  <div class="box"><img id="photoImg" src="fotos/foto1.png" width="300"></div>
-  <div class="box" id="calendarContent">Calendário simples</div>
-  <div class="box" id="weatherContent">Carregando clima...</div>
-  <div class="box">
-    <h3>Tarefas</h3>
-    <ul id="taskList"></ul>
+  <div class="painel">
+    <div class="relogio">
+      <div id="hora"></div>
+      <div>Good morning</div>
+    </div>
+
+    <div class="calendario">
+      <div id="mesAno"></div>
+      <table id="gradeCalendario"></table>
+    </div>
+
+    <div class="clima">
+      <div id="temp">--°</div>
+      <div id="desc">...</div>
+    </div>
+
+    <div class="foto"><img id="carrossel" src="" alt="Foto"></div>
+
+    <div class="todo">
+      <h3>To-do</h3>
+      <ul id="tarefas"></ul>
+    </div>
+
+    <div class="agenda">
+      <h3>Agenda</h3>
+      <ul id="agenda"></ul>
+    </div>
   </div>
-  <div class="box">
-    <h3>Agenda de Hoje</h3>
-    <ul id="agendaList"></ul>
-  </div>
+
+<script>
+  // Relógio
+  function atualizaHora() {
+    var agora = new Date();
+    document.getElementById('hora').innerText = agora.toLocaleTimeString();
+  }
+  setInterval(atualizaHora, 1000);
+  atualizaHora();
+
+  // Clima
+  var apiKey = 'YOUR_OPENWEATHERMAP_API_KEY';
+  fetch('https://api.openweathermap.org/data/2.5/weather?q=Sao Paulo&units=metric&appid=' + apiKey)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      document.getElementById('temp').innerText = Math.round(d.main.temp) + '°';
+      document.getElementById('desc').innerText = d.weather[0].description;
+    });
+
+  // Mensagem
+  firebase.database().ref('mensagemAtual').on('value', function(snap){
+    var msg = snap.val();
+    if (msg && msg.som) {
+      var beep = new Audio('https://www.soundjay.com/button/beep-07.wav');
+      beep.play();
+      setTimeout(function(){ beep.pause(); }, 5000);
+    }
+  });
+
+  // Tarefas
+  firebase.database().ref('tarefas').on('value', function(snap){
+    var ul = document.getElementById('tarefas');
+    ul.innerHTML = '';
+    snap.forEach(function(child){
+      var li = document.createElement('li');
+      li.textContent = child.val().texto;
+      ul.appendChild(li);
+    });
+  });
+
+  // Agenda (Eventos próximos) — simula lista
+  var hoje = new Date();
+  var agenda = document.getElementById('agenda');
+  for (var i = 0; i < 15; i++) {
+    var dia = new Date();
+    dia.setDate(hoje.getDate() + i);
+    var li = document.createElement('li');
+    li.textContent = dia.toDateString() + ' — Evento';
+    agenda.appendChild(li);
+  }
+
+  // Carrossel de fotos
+  var fotos = [];
+  firebase.storage().ref('fotos').listAll().then(function(res){
+    res.items.forEach(function(item){
+      item.getDownloadURL().then(function(url){
+        fotos.push(url);
+      });
+    });
+  });
+
+  var idx = 0;
+  function trocaFoto(){
+    if(fotos.length > 0){
+      document.getElementById('carrossel').src = fotos[idx];
+      idx = (idx + 1) % fotos.length;
+    }
+  }
+  setInterval(trocaFoto, 5000);
+</script>
 </body>
 </html>
