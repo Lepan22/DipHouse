@@ -1,129 +1,61 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Painel de Controle</title>
-  <script type="module">
-    import {
-      db, ref, push, update, remove, onValue,
-      storage, sRef, uploadBytes, getDownloadURL, deleteObject
-    } from './firebase.js';
+  <meta charset="UTF-8">
+  <title>Controle</title>
+  <!-- Firebase -->
+  <!-- Inclua firebase.js acima -->
 
-    const $ = (id) => document.getElementById(id);
-
-    $('btnAddEvento').onclick = () => {
-      const dia = $('eventoData').value.trim();
-      const texto = $('eventoTexto').value.trim();
-      if (dia && texto) {
-        push(ref(db, 'eventos'), { dia, texto });
-        $('eventoData').value = '';
-        $('eventoTexto').value = '';
-      }
-    };
-
-    onValue(ref(db, 'eventos'), snap => {
-      const el = $('listaEventos');
-      el.innerHTML = '';
-      snap.forEach(child => {
-        const { dia, texto } = child.val();
-        el.innerHTML += `<div>${dia} — ${texto}
-          <button onclick="editarEvento('${child.key}', '${dia}', \`${texto}\`)">Editar</button>
-          <button onclick="removerItem('eventos', '${child.key}')">Excluir</button>
-        </div>`;
-      });
-    });
-
-    window.editarEvento = (key, dia, texto) => {
-      const novoDia = prompt('Nova data:', dia);
-      const novoTexto = prompt('Novo texto:', texto);
-      if (novoDia && novoTexto) {
-        update(ref(db, `eventos/${key}`), { dia: novoDia, texto: novoTexto });
-      }
-    };
-
-    $('btnAddTarefa').onclick = () => {
-      const texto = $('tarefaTexto').value.trim();
-      if (texto) {
-        push(ref(db, 'tarefas'), { texto, concluida: false });
-        $('tarefaTexto').value = '';
-      }
-    };
-
-    onValue(ref(db, 'tarefas'), snap => {
-      const el = $('listaTarefas');
-      el.innerHTML = '';
-      snap.forEach(child => {
-        const { texto, concluida } = child.val();
-        el.innerHTML += `<div>${concluida ? `<s>${texto}</s>` : texto}
-          <button onclick="toggleConclusao('${child.key}', ${!concluida})">
-            ${concluida ? 'Desfazer' : 'Concluir'}
-          </button>
-          <button onclick="removerItem('tarefas', '${child.key}')">Excluir</button>
-        </div>`;
-      });
-    });
-
-    window.toggleConclusao = (key, status) => 
-      update(ref(db, `tarefas/${key}`), { concluida: status });
-
-    $('btnUploadFoto').onclick = () => {
-      const files = $('fotoInput').files;
-      Array.from(files).forEach(file => {
-        const path = 'fotos/' + Date.now() + '-' + file.name;
-        const fileRef = sRef(storage, path);
-        uploadBytes(fileRef, file)
-          .then(() => getDownloadURL(fileRef))
-          .then(url => push(ref(db, 'fotos'), { url, path }))
-          .then(() => console.log('Foto salva com sucesso'))
-          .catch(err => console.error('Erro ao salvar foto:', err));
-      });
-    };
-
-    onValue(ref(db, 'fotos'), snap => {
-      const galeria = $('listaFotos');
-      galeria.innerHTML = '';
-      snap.forEach(child => {
-        const { url, path } = child.val();
-        galeria.innerHTML += `<div>
-          <img src="${url}" width="150">
-          <button onclick="removerFoto('${child.key}', '${path}')">Excluir</button>
-        </div>`;
-      });
-    });
-
-    window.removerItem = (colecao, key) => 
-      remove(ref(db, `${colecao}/${key}`));
-
-    window.removerFoto = (key, path) => {
-      remove(ref(db, `fotos/${key}`));
-      deleteObject(sRef(storage, path));
-    };
-  </script>
-
-  <style>
-    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
-    input, textarea, button { margin: 5px 0; padding: 10px; width: 100%; border: none; border-radius: 5px; }
-    img { margin-top: 5px; border-radius: 5px; }
-  </style>
 </head>
 <body>
-  <h1>Painel de Controle</h1>
+  <h1>Controle</h1>
 
-  <h2>Eventos</h2>
-  <input id="eventoData" placeholder="Data">
-  <textarea id="eventoTexto" placeholder="Descrição"></textarea>
-  <button id="btnAddEvento">Salvar Evento</button>
-  <div id="listaEventos"></div>
+  <h2>Mensagem</h2>
+  <input type="text" id="msgTexto" placeholder="Mensagem">
+  <label><input type="checkbox" id="msgSom"> Som</label>
+  <button onclick="enviarMsg()">Enviar</button>
+  <button onclick="apagarMsg()">Apagar</button>
 
   <h2>Tarefas</h2>
-  <input id="tarefaTexto" placeholder="Tarefa">
-  <button id="btnAddTarefa">Salvar Tarefa</button>
-  <div id="listaTarefas"></div>
+  <input type="text" id="tarefaTexto" placeholder="Tarefa">
+  <button onclick="addTarefa()">Adicionar</button>
+  <ul id="listaTarefas"></ul>
 
   <h2>Fotos</h2>
-  <input type="file" id="fotoInput" multiple accept="image/*">
-  <button id="btnUploadFoto">Enviar Fotos</button>
-  <div id="listaFotos"></div>
+  <input type="file" id="fotoFile">
+  <button onclick="uploadFoto()">Enviar Foto</button>
+
+<script>
+  function enviarMsg() {
+    var texto = document.getElementById('msgTexto').value;
+    var som = document.getElementById('msgSom').checked;
+    firebase.database().ref('mensagemAtual').set({ texto: texto, som: som });
+  }
+
+  function apagarMsg() {
+    firebase.database().ref('mensagemAtual').remove();
+  }
+
+  function addTarefa() {
+    var texto = document.getElementById('tarefaTexto').value;
+    firebase.database().ref('tarefas').push({ texto: texto });
+  }
+
+  firebase.database().ref('tarefas').on('value', function(snapshot) {
+    var lista = document.getElementById('listaTarefas');
+    lista.innerHTML = '';
+    snapshot.forEach(function(child) {
+      var li = document.createElement('li');
+      li.textContent = child.val().texto;
+      lista.appendChild(li);
+    });
+  });
+
+  function uploadFoto() {
+    var file = document.getElementById('fotoFile').files[0];
+    var storageRef = firebase.storage().ref('fotos/' + file.name);
+    storageRef.put(file).then(function() { alert('Foto enviada!'); });
+  }
+</script>
 </body>
 </html>
