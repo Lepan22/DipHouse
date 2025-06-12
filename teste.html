@@ -1,73 +1,74 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel - Carrossel Google Drive</title>
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+  <title>Painel com Carrossel</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
   <style>
     body {
       margin: 0;
-      font-family: sans-serif;
       background: #111;
-      color: #fff;
-    }
-    .painel {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 10px;
-      height: 100vh;
-      padding: 10px;
-    }
-    .bloco {
-      background: #222;
-      border-radius: 10px;
-      padding: 10px;
+      color: white;
+      font-family: sans-serif;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      text-align: center;
+      align-items: center;
+      height: 100vh;
     }
-    .foto-carrossel img {
-      width: 100%;
-      height: auto;
-      max-height: 100%;
-      object-fit: cover;
+    #carrossel {
+      width: 90%;
+      height: 90%;
       border-radius: 10px;
+      object-fit: cover;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
   </style>
 </head>
 <body>
 
-<div class="painel">
-  <div class="bloco" style="grid-column: span 4; grid-row: span 4;">
-    <div class="foto-carrossel">
-      <img id="carrossel" src="" alt="Carrossel">
-    </div>
-  </div>
-</div>
+<img id="carrossel" src="" alt="Carrossel de Fotos">
 
 <script>
-var fotos = [
-  "https://drive.google.com/uc?export=view&id=1pQ_3QifFInUO1WpbHU4jtcgPWhBsHG-j"
-];
+  var firebaseConfig = {
+    apiKey: "AIzaSyD304qg6DdYz0gBVxDIVHW5bKUq6MabRI4",
+    authDomain: "diphouse-planner.firebaseapp.com",
+    databaseURL: "https://diphouse-planner-default-rtdb.firebaseio.com",
+    projectId: "diphouse-planner",
+    storageBucket: "diphouse-planner.appspot.com",
+    messagingSenderId: "621999172821",
+    appId: "1:621999172821:web:df6fed5d21cb35ff81065c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var storage = firebase.storage();
 
-var idx = 0;
+  async function iniciarCarrossel() {
+    const ref = storage.ref('fotos');
+    try {
+      const res = await ref.listAll();
+      const urls = await Promise.all(res.items.map(item => item.getDownloadURL()));
+      let index = 0;
+      const img = document.getElementById('carrossel');
 
-function trocarFoto() {
-  if (fotos.length > 0) {
-    document.getElementById('carrossel').src = fotos[idx];
-    idx = (idx + 1) % fotos.length;
+      function mostrar() {
+        img.src = urls[index];
+        index = (index + 1) % urls.length;
+      }
+
+      if (urls.length > 0) {
+        mostrar();
+        setInterval(mostrar, 5000);
+      } else {
+        img.alt = 'Nenhuma imagem disponível';
+      }
+    } catch (err) {
+      console.error('Erro ao carregar imagens:', err);
+      document.getElementById('carrossel').alt = 'Erro ao carregar imagens';
+    }
   }
-}
 
-// Iniciar carrossel
-trocarFoto();
-setInterval(trocarFoto, 5000);
+  iniciarCarrossel();
 </script>
 
 </body>
