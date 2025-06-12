@@ -27,7 +27,7 @@ async function carregarPrevisao() {
   try {
     const res = await fetch('https://wttr.in/Sao+Paulo?format=j1');
     const data = await res.json();
-    const dias = data.weather.slice(0, 3); // hoje, amanhã, depois
+    const dias = data.weather.slice(0, 3); // amanhã, depois, depois
 
     container.innerHTML = '';
 
