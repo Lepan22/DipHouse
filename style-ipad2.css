@@ -1,0 +1,269 @@
+/* CSS otimizado para iPad 2 (iOS 5-9) */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #fff;
+  -webkit-text-size-adjust: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+}
+
+.grid-container {
+  display: block; /* Fallback para navegadores sem grid */
+  width: 100%;
+  height: 100vh;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* Grid layout para navegadores que suportam */
+@supports (display: grid) {
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 8px;
+  }
+}
+
+.bloco {
+  background: #222;
+  border-radius: 8px;
+  padding: 8px;
+  overflow: hidden;
+  display: block;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* Posicionamento para navegadores com grid */
+@supports (display: grid) {
+  .bloco {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0;
+  }
+}
+
+.relogio-central {
+  text-align: center;
+}
+
+.clock-text {
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.greeting-text {
+  margin-top: 5px;
+  font-size: 1em;
+}
+
+.weather-week {
+  display: block;
+  text-align: center;
+}
+
+.weather-day {
+  background: #333;
+  padding: 6px;
+  border-radius: 6px;
+  text-align: center;
+  margin: 2px;
+  display: inline-block;
+  min-width: 60px;
+  font-size: 0.8em;
+}
+
+.weather-error {
+  color: #888;
+  font-size: 0.9em;
+  padding: 10px;
+}
+
+iframe {
+  width: 100%;
+  height: 200px;
+  border: none;
+}
+
+/* Estilos do carrossel simplificados para iPad 2 */
+.carousel-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-slide {
+  width: 100%;
+  height: 80%;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-controls {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  margin-left: -60px;
+  width: 120px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 5px;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.carousel-btn {
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  color: white;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 0 2px;
+  vertical-align: middle;
+}
+
+.carousel-btn:active {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.carousel-indicators {
+  display: inline-block;
+  margin: 0 5px;
+}
+
+.indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  margin: 0 2px;
+  display: inline-block;
+}
+
+.indicator.active {
+  background: white;
+}
+
+.indicator:active {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* Estilos para erro do carrossel */
+.carousel-error {
+  text-align: center;
+  color: #888;
+  padding: 20px;
+}
+
+.error-icon {
+  font-size: 2em;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.error-text {
+  font-size: 1em;
+  margin-bottom: 5px;
+}
+
+.error-subtext {
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+/* Layout específico para iPad 2 em landscape */
+@media screen and (min-width: 1024px) and (orientation: landscape) {
+  .grid-container {
+    height: 768px;
+  }
+  
+  .clock-text {
+    font-size: 2.5em;
+  }
+  
+  .greeting-text {
+    font-size: 1.2em;
+  }
+  
+  iframe {
+    height: 100%;
+  }
+}
+
+/* Layout para iPad 2 em portrait */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  .grid-container {
+    display: block;
+  }
+  
+  .bloco {
+    width: 100%;
+    height: 120px;
+    margin-bottom: 10px;
+  }
+  
+  .bloco.calendario {
+    height: 300px;
+  }
+  
+  .bloco.foto {
+    height: 200px;
+  }
+  
+  .clock-text {
+    font-size: 1.8em;
+  }
+  
+  .weather-day {
+    min-width: 50px;
+    font-size: 0.7em;
+  }
+}
+
+/* Otimizações de performance para iPad 2 */
+* {
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+}
+
+img {
+  -webkit-transform: translateZ(0);
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Remover animações complexas para melhor performance */
+.carousel-slide img {
+  transition: none;
+}
+
+.carousel-btn, .indicator {
+  transition: none;
+}
+
+/* Melhorar touch targets para iPad */
+.carousel-btn, .indicator {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Prevenir zoom acidental */
+input, select, textarea, button {
+  font-size: 16px;
+}
+
