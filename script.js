@@ -27,10 +27,11 @@ async function carregarPrevisao() {
   try {
     const res = await fetch('https://wttr.in/Sao+Paulo?format=j1');
     const data = await res.json();
-    const dias = data.weather.slice(0, 4);
+    const dias = data.weather.slice(0, 3); // hoje, amanhã, depois
+
     container.innerHTML = '';
 
-    dias.forEach((dia, i) => {
+    dias.forEach((dia) => {
       const dataObj = new Date(dia.date);
       const nomeDia = dataObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase();
       const temp = `${dia.mintempC}° / ${dia.maxtempC}°`;
