@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -10,37 +11,6 @@
 <body>
 
 <h1>Controle Completo</h1>
-
-<h2>Mensagem</h2>
-<input type="text" id="mensagemTexto" placeholder="Texto da mensagem">
-<label>
-  <input type="checkbox" id="mensagemSom"> Tocar som
-</label>
-<br>
-<button onclick="enviarMensagem()">Enviar</button>
-<button onclick="apagarMensagem()">Apagar</button>
-
-<h2>Tarefas</h2>
-<input type="text" id="tarefaTexto" placeholder="Tarefa">
-<label>
-  <input type="checkbox" id="tarefaStatus" checked> Aberto
-</label>
-<button onclick="salvarTarefa()">Salvar</button>
-<ul id="listaTarefas"></ul>
-
-<h2>Agendamentos</h2>
-<input type="date" id="agendamentoData">
-<input type="text" id="agendamentoDetalhe" placeholder="Detalhe">
-<select id="agendamentoCategoria">
-  <option value="Escola">Escola</option>
-  <option value="Esporte">Esporte</option>
-  <option value="Saude">Saúde</option>
-  <option value="Lazer">Lazer</option>
-  <option value="Viagem">Viagem</option>
-  <option value="Outras">Outras</option>
-</select>
-<button onclick="salvarAgendamento()">Salvar</button>
-<ul id="listaAgendamentos"></ul>
 
 <h2>Upload de Fotos</h2>
 <input type="file" id="fotoFile">
@@ -58,123 +28,46 @@ var firebaseConfig = {
   appId: "1:126387069829:web:7e365252a98da884075aec"
 };
 firebase.initializeApp(firebaseConfig);
-var db = firebase.database();
 var storage = firebase.storage();
 
-// Mensagem
-function enviarMensagem() {
-  var texto = document.getElementById('mensagemTexto').value;
-  var som = document.getElementById('mensagemSom').checked;
-  db.ref('mensagemAtual').set({ texto: texto, som: som });
-}
-function apagarMensagem() {
-  db.ref('mensagemAtual').remove();
-}
-
-// Tarefas
-var editTarefaKey = null;
-function salvarTarefa() {
-  var texto = document.getElementById('tarefaTexto').value;
-  var status = document.getElementById('tarefaStatus').checked ? 'Aberto' : 'Fechado';
-  if (editTarefaKey) {
-    db.ref('tarefas/' + editTarefaKey).update({ texto, status });
-    editTarefaKey = null;
-  } else {
-    db.ref('tarefas').push({ texto, status });
-  }
-  document.getElementById('tarefaTexto').value = '';
-}
-db.ref('tarefas').on('value', function(snapshot) {
-  var lista = document.getElementById('listaTarefas');
-  lista.innerHTML = '';
-  snapshot.forEach(function(child) {
-    var li = document.createElement('li');
-    li.textContent = child.val().texto + ' (' + child.val().status + ') ';
-    var btnEditar = document.createElement('button');
-    btnEditar.textContent = 'Editar';
-    btnEditar.onclick = function() {
-      document.getElementById('tarefaTexto').value = child.val().texto;
-      document.getElementById('tarefaStatus').checked = (child.val().status === 'Aberto');
-      editTarefaKey = child.key;
-    };
-    var btnExcluir = document.createElement('button');
-    btnExcluir.textContent = 'Excluir';
-    btnExcluir.onclick = function() {
-      db.ref('tarefas/' + child.key).remove();
-    };
-    li.appendChild(btnEditar);
-    li.appendChild(btnExcluir);
-    lista.appendChild(li);
-  });
-});
-
-// Agendamentos
-var editAgendamentoKey = null;
-function salvarAgendamento() {
-  var data = document.getElementById('agendamentoData').value;
-  var detalhe = document.getElementById('agendamentoDetalhe').value;
-  var categoria = document.getElementById('agendamentoCategoria').value;
-  if (editAgendamentoKey) {
-    db.ref('agendamentos/' + editAgendamentoKey).update({ data, detalhe, categoria });
-    editAgendamentoKey = null;
-  } else {
-    db.ref('agendamentos').push({ data, detalhe, categoria });
-  }
-  document.getElementById('agendamentoData').value = '';
-  document.getElementById('agendamentoDetalhe').value = '';
-}
-db.ref('agendamentos').on('value', function(snapshot) {
-  var lista = document.getElementById('listaAgendamentos');
-  lista.innerHTML = '';
-  snapshot.forEach(function(child) {
-    var li = document.createElement('li');
-    li.textContent = child.val().data + ' - ' + child.val().detalhe + ' (' + child.val().categoria + ') ';
-    var btnEditar = document.createElement('button');
-    btnEditar.textContent = 'Editar';
-    btnEditar.onclick = function() {
-      document.getElementById('agendamentoData').value = child.val().data;
-      document.getElementById('agendamentoDetalhe').value = child.val().detalhe;
-      document.getElementById('agendamentoCategoria').value = child.val().categoria;
-      editAgendamentoKey = child.key;
-    };
-    var btnExcluir = document.createElement('button');
-    btnExcluir.textContent = 'Excluir';
-    btnExcluir.onclick = function() {
-      db.ref('agendamentos/' + child.key).remove();
-    };
-    li.appendChild(btnEditar);
-    li.appendChild(btnExcluir);
-    lista.appendChild(li);
-  });
-});
-
-// Upload de fotos
+// Upload de fotos corrigido
 function uploadFoto() {
   var file = document.getElementById('fotoFile').files[0];
   if (!file) return alert('Selecione uma foto!');
   var storageRef = storage.ref('fotos/' + file.name);
-  storageRef.put(file).then(function() {
-    alert('Foto enviada!');
-    listarFotos();
-  });
+  storageRef.put(file)
+    .then(() => {
+      alert('Foto enviada com sucesso!');
+      listarFotos();
+    })
+    .catch(error => {
+      console.error(error);
+      alert('Erro ao enviar foto: ' + error.message);
+    });
 }
+
 function listarFotos() {
   var lista = document.getElementById('listaFotos');
   lista.innerHTML = '';
   storage.ref('fotos').listAll().then(function(res) {
     res.items.forEach(function(itemRef) {
-      var li = document.createElement('li');
-      li.textContent = itemRef.name + ' ';
-      var btnExcluir = document.createElement('button');
-      btnExcluir.textContent = 'Excluir';
-      btnExcluir.onclick = function() {
-        itemRef.delete().then(function() {
-          alert('Foto excluída!');
-          listarFotos();
-        });
-      };
-      li.appendChild(btnExcluir);
-      lista.appendChild(li);
+      itemRef.getDownloadURL().then(function(url) {
+        var li = document.createElement('li');
+        var img = document.createElement('img');
+        img.src = url;
+        img.style.maxWidth = '100px';
+        li.appendChild(img);
+        var btnExcluir = document.createElement('button');
+        btnExcluir.textContent = 'Excluir';
+        btnExcluir.onclick = function() {
+          itemRef.delete().then(function() {
+            alert('Foto excluída!');
+            listarFotos();
+          });
+        };
+        li.appendChild(btnExcluir);
+        lista.appendChild(li);
+      });
     });
   });
 }
