@@ -1,17 +1,15 @@
-
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 <script>
   var firebaseConfig = {
-    apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
-    authDomain: "diphouse-control.firebaseapp.com",
-    databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
-    projectId: "diphouse-control",
-    storageBucket: "diphouse-control.appspot.com",
-    messagingSenderId: "126387069829",
-    appId: "1:126387069829:web:7e365252a98da884075aec",
-    measurementId: "G-TFRB580278"
+    apiKey: "AIzaSyD304qg6DdYz0gBVxDIVHW5bKUq6MabRI4",
+    authDomain: "diphouse-planner.firebaseapp.com",
+    databaseURL: "https://diphouse-planner-default-rtdb.firebaseio.com",
+    projectId: "diphouse-planner",
+    storageBucket: "diphouse-planner.appspot.com",
+    messagingSenderId: "621999172821",
+    appId: "1:621999172821:web:df6fed5d21cb35ff81065c",
+    measurementId: "G-ZP3YQTYHMD"
   };
   firebase.initializeApp(firebaseConfig);
 </script>
