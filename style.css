@@ -1,3 +1,4 @@
+
 body {
   margin: 0;
   font-family: sans-serif;
@@ -5,39 +6,56 @@ body {
   color: #fff;
 }
 
-.painel {
+.grid-container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-gap: 20px;
-  padding: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 10px;
+  height: 100vh;
+  padding: 10px;
 }
 
-.relogio, .calendario, .clima, .foto, .todo, .agenda {
+.bloco {
   background: #222;
-  padding: 15px;
   border-radius: 10px;
+  padding: 10px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-.foto img {
-  width: 100%;
-  border-radius: 10px;
+.relogio {
+  grid-column: span 1;
 }
 
-h3 {
-  margin: 0 0 10px;
+.clima {
+  grid-column: span 2;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
+.calendario {
+  grid-column: span 1;
 }
 
-#gradeCalendario {
-  width: 100%;
-  text-align: center;
-  border-collapse: collapse;
+.tarefas {
+  grid-column: span 1;
 }
 
-#gradeCalendario th, #gradeCalendario td {
-  padding: 5px;
+.agenda {
+  grid-column: span 2;
+}
+
+.foto {
+  grid-column: span 1;
+}
+
+.clock-text {
+  font-size: 2.5em;
+  font-weight: bold;
+}
+
+.greeting-text {
+  margin-top: 5px;
+  font-size: 1.2em;
 }
