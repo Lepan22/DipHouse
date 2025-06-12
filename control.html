@@ -5,84 +5,62 @@
   <title>Upload  Fotos</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-  <style>
-    body { font-family: sans-serif; background: #111; color: #fff; padding: 20px; }
-    input, button { margin: 10px 0; padding: 10px; font-size: 1rem; }
-    img { max-width: 150px; margin: 10px; border-radius: 8px; display: block; }
-    #status { margin-top: 10px; font-weight: bold; }
-  </style>
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyD304qg6DdYz0gBVxDIVHW5bKUq6MabRI4",
+      authDomain: "diphouse-planner.firebaseapp.com",
+      databaseURL: "https://diphouse-planner-default-rtdb.firebaseio.com",
+      projectId: "diphouse-planner",
+      storageBucket: "diphouse-planner.appspot.com",
+      messagingSenderId: "621999172821",
+      appId: "1:621999172821:web:df6fed5d21cb35ff81065c",
+      measurementId: "G-ZP3YQTYHMD"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var storage = firebase.storage();
+  </script>
 </head>
 <body>
 
-<h2>Upload de Fotos (diphouse-planner)</h2>
+<h2>Upload de Fotos</h2>
 <input type="file" id="fotoFile">
-<br>
-<button id="btnUpload">Enviar</button>
-<div id="status"></div>
+<button onclick="uploadFoto()">Enviar</button>
 
 <ul id="listaFotos"></ul>
 
 <script>
-  // Inicializa Firebase
-  var firebaseConfig = {
-    apiKey: "AIzaSyD304qg6DdYz0gBVxDIVHW5bKUq6MabRI4",
-    authDomain: "diphouse-planner.firebaseapp.com",
-    databaseURL: "https://diphouse-planner-default-rtdb.firebaseio.com",
-    projectId: "diphouse-planner",
-    storageBucket: "diphouse-planner.appspot.com",
-    messagingSenderId: "621999172821",
-    appId: "1:621999172821:web:df6fed5d21cb35ff81065c"
-  };
-  firebase.initializeApp(firebaseConfig);
-  var storage = firebase.storage();
+function uploadFoto() {
+  var file = document.getElementById('fotoFile').files[0];
+  if (!file) return alert('Selecione uma foto!');
+  var ref = storage.ref('fotos/' + file.name);
+  ref.put(file)
+    .then(() => {
+      alert('Foto enviada com sucesso!');
+      listarFotos();
+    })
+    .catch(err => {
+      alert('Erro ao enviar: ' + err.message);
+    });
+}
 
-  // Função para upload
-  function uploadFoto() {
-    const fileInput = document.getElementById('fotoFile');
-    const status = document.getElementById('status');
-    const file = fileInput.files[0];
-
-    if (!file) {
-      status.textContent = 'Selecione uma imagem!';
-      status.style.color = 'orange';
-      return;
-    }
-
-    status.textContent = 'Enviando...';
-    status.style.color = 'white';
-
-    const ref = storage.ref('fotos/' + file.name);
-    ref.put(file)
-      .then(() => {
-        status.textContent = 'Foto enviada com sucesso!';
-        status.style.color = 'lightgreen';
-        listarFotos();
-      })
-      .catch(err => {
-        status.textContent = 'Erro ao enviar: ' + err.message;
-        status.style.color = 'red';
-      });
-  }
-
-  // Listar fotos salvas
-  function listarFotos() {
-    const lista = document.getElementById('listaFotos');
-    lista.innerHTML = '';
-    storage.ref('fotos').listAll().then(res => {
-      res.items.forEach(item => {
-        item.getDownloadURL().then(url => {
-          const li = document.createElement('li');
-          const img = document.createElement('img');
-          img.src = url;
-          li.appendChild(img);
-          lista.appendChild(li);
-        });
+function listarFotos() {
+  var lista = document.getElementById('listaFotos');
+  lista.innerHTML = '';
+  storage.ref('fotos').listAll().then(res => {
+    res.items.forEach(item => {
+      item.getDownloadURL().then(url => {
+        var li = document.createElement('li');
+        var img = document.createElement('img');
+        img.src = url;
+        img.style.maxWidth = '150px';
+        img.style.margin = '5px';
+        li.appendChild(img);
+        lista.appendChild(li);
       });
     });
-  }
-
-  document.getElementById('btnUpload').addEventListener('click', uploadFoto);
-  listarFotos();
+  });
+}
+listarFotos();
 </script>
 
 </body>
