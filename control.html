@@ -3,26 +3,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Upload  Fotos</title>
+  <title>Upload de Fotos</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      background: #111;
-      color: #fff;
-      padding: 20px;
-    }
-    input, button {
-      margin: 10px 0;
-      padding: 8px;
-      font-size: 1em;
-    }
-    img {
-      max-width: 150px;
-      margin: 10px;
-      border-radius: 8px;
-    }
+    body { font-family: sans-serif; background: #111; color: #fff; padding: 20px; }
+    input, button { margin: 10px 0; padding: 8px; font-size: 1em; }
+    img { max-width: 150px; margin: 10px; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -35,7 +22,6 @@
 <ul id="listaFotos"></ul>
 
 <script>
-  // Configuração do Firebase para diphouse-planner
   var firebaseConfig = {
     apiKey: "AIzaSyD304qg6DdYz0gBVxDIVHW5bKUq6MabRI4",
     authDomain: "diphouse-planner.firebaseapp.com",
