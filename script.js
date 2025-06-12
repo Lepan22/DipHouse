@@ -1,93 +1,52 @@
 
-body {
-  margin: 0;
-  font-family: sans-serif;
-  background: #111;
-  color: #fff;
+function updateClock() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${hours}:${minutes}`;
+
+  const greeting = now.getHours() < 12 ? 'Bom dia' :
+                   now.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
+  document.getElementById('greeting').textContent = greeting;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function climaParaEmoji(texto) {
+  texto = texto.toLowerCase();
+  if (texto.includes('sun') || texto.includes('sol')) return '☀️';
+  if (texto.includes('cloud') || texto.includes('nublado')) return '☁️';
+  if (texto.includes('rain') || texto.includes('chuva')) return '🌧️';
+  if (texto.includes('storm') || texto.includes('tempest')) return '⛈️';
+  if (texto.includes('snow') || texto.includes('neve')) return '❄️';
+  return '🌡️';
 }
 
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: auto auto auto;
-  gap: 10px;
-  padding: 10px;
-  height: 100vh;
-  box-sizing: border-box;
-}
+async function carregarPrevisao() {
+  const container = document.getElementById('weatherWeek');
+  try {
+    const res = await fetch('https://wttr.in/Sao+Paulo?format=j1');
+    const data = await res.json();
+    const dias = data.weather.slice(0, 3); // hoje, amanhã, depois
 
-.bloco {
-  background: #222;
-  border-radius: 10px;
-  padding: 10px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-}
+    container.innerHTML = '';
 
-.relogio {
-  grid-column: span 1;
-}
+    dias.forEach((dia) => {
+      const dataObj = new Date(dia.date);
+      const nomeDia = dataObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase();
+      const temp = `${dia.mintempC}° / ${dia.maxtempC}°`;
+      const desc = dia.hourly[4].weatherDesc[0].value;
+      const emoji = climaParaEmoji(desc);
 
-.clima {
-  grid-column: span 2;
+      const div = document.createElement('div');
+      div.className = 'weather-day';
+      div.innerHTML = `<div>${nomeDia}</div>
+                       <div style="font-size:2em">${emoji}</div>
+                       <div>${temp}</div>`;
+      container.appendChild(div);
+    });
+  } catch {
+    container.textContent = 'Erro ao carregar clima';
+  }
 }
-
-.calendario {
-  grid-column: span 1;
-}
-
-.tarefas {
-  grid-column: span 1;
-}
-
-.agenda {
-  grid-column: span 2;
-  height: 100%;
-  padding: 0;
-}
-
-.foto {
-  grid-column: span 1;
-}
-
-.clock-text {
-  font-size: 2.5em;
-  font-weight: bold;
-}
-
-.greeting-text {
-  margin-top: 5px;
-  font-size: 1.2em;
-}
-
-.weather-week {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  margin-top: 10px;
-  overflow-x: auto;
-  width: 100%;
-  justify-content: center;
-}
-
-.weather-day {
-  background: #333;
-  padding: 8px;
-  border-radius: 8px;
-  text-align: center;
-  min-width: 80px;
-}
-
-.weather-day img {
-  width: 40px;
-  height: 40px;
-}
-
-iframe {
-  width: 100%;
-  height: 300px;
-  border: none;
-}
+carregarPrevisao();
