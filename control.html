@@ -3,69 +3,58 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Consstrole </title>
+  <title>Upload de Fotos</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
+      authDomain: "diphouse-control.firebaseapp.com",
+      databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
+      projectId: "diphouse-control",
+      storageBucket: "diphouse-control.appspot.com",
+      messagingSenderId: "126387069829",
+      appId: "1:126387069829:web:7e365252a98da884075aec"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var storage = firebase.storage();
+  </script>
 </head>
 <body>
-
-<h1>Controle Completo</h1>
 
 <h2>Upload de Fotos</h2>
 <input type="file" id="fotoFile">
 <button onclick="uploadFoto()">Enviar</button>
+
 <ul id="listaFotos"></ul>
 
 <script>
-var firebaseConfig = {
-  apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
-  authDomain: "diphouse-control.firebaseapp.com",
-  databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
-  projectId: "diphouse-control",
-  storageBucket: "diphouse-control.appspot.com",
-  messagingSenderId: "126387069829",
-  appId: "1:126387069829:web:7e365252a98da884075aec"
-};
-firebase.initializeApp(firebaseConfig);
-var storage = firebase.storage();
-
-// Upload de fotos corrigido
 function uploadFoto() {
   var file = document.getElementById('fotoFile').files[0];
   if (!file) return alert('Selecione uma foto!');
-  var storageRef = storage.ref('fotos/' + file.name);
-  storageRef.put(file)
+  var ref = storage.ref('fotos/' + file.name);
+  ref.put(file)
     .then(() => {
       alert('Foto enviada com sucesso!');
       listarFotos();
     })
-    .catch(error => {
-      console.error(error);
-      alert('Erro ao enviar foto: ' + error.message);
+    .catch(err => {
+      alert('Erro ao enviar: ' + err.message);
     });
 }
 
 function listarFotos() {
   var lista = document.getElementById('listaFotos');
   lista.innerHTML = '';
-  storage.ref('fotos').listAll().then(function(res) {
-    res.items.forEach(function(itemRef) {
-      itemRef.getDownloadURL().then(function(url) {
+  storage.ref('fotos').listAll().then(res => {
+    res.items.forEach(item => {
+      item.getDownloadURL().then(url => {
         var li = document.createElement('li');
         var img = document.createElement('img');
         img.src = url;
-        img.style.maxWidth = '100px';
+        img.style.maxWidth = '150px';
+        img.style.margin = '5px';
         li.appendChild(img);
-        var btnExcluir = document.createElement('button');
-        btnExcluir.textContent = 'Excluir';
-        btnExcluir.onclick = function() {
-          itemRef.delete().then(function() {
-            alert('Foto excluída!');
-            listarFotos();
-          });
-        };
-        li.appendChild(btnExcluir);
         lista.appendChild(li);
       });
     });
