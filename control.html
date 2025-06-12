@@ -1,27 +1,29 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Upload de Fotos</title>
+  <title>Upload  Fotos</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
   <style>
     body { font-family: sans-serif; background: #111; color: #fff; padding: 20px; }
-    input, button { margin: 10px 0; padding: 8px; font-size: 1em; }
-    img { max-width: 150px; margin: 10px; border-radius: 8px; }
+    input, button { margin: 10px 0; padding: 10px; font-size: 1rem; }
+    img { max-width: 150px; margin: 10px; border-radius: 8px; display: block; }
+    #status { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
 
-<h2>Upload de Fotos</h2>
+<h2>Upload de Fotos (diphouse-planner)</h2>
 <input type="file" id="fotoFile">
 <br>
-<button onclick="uploadFoto()">Enviar</button>
+<button id="btnUpload">Enviar</button>
+<div id="status"></div>
 
 <ul id="listaFotos"></ul>
 
 <script>
+  // Inicializa Firebase
   var firebaseConfig = {
     apiKey: "AIzaSyD304qg6DdYz0gBVxDIVHW5bKUq6MabRI4",
     authDomain: "diphouse-planner.firebaseapp.com",
@@ -34,20 +36,35 @@
   firebase.initializeApp(firebaseConfig);
   var storage = firebase.storage();
 
+  // Função para upload
   function uploadFoto() {
-    const file = document.getElementById('fotoFile').files[0];
-    if (!file) return alert('Selecione uma foto!');
+    const fileInput = document.getElementById('fotoFile');
+    const status = document.getElementById('status');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      status.textContent = 'Selecione uma imagem!';
+      status.style.color = 'orange';
+      return;
+    }
+
+    status.textContent = 'Enviando...';
+    status.style.color = 'white';
+
     const ref = storage.ref('fotos/' + file.name);
     ref.put(file)
       .then(() => {
-        alert('Foto enviada com sucesso!');
+        status.textContent = 'Foto enviada com sucesso!';
+        status.style.color = 'lightgreen';
         listarFotos();
       })
       .catch(err => {
-        alert('Erro ao enviar: ' + err.message);
+        status.textContent = 'Erro ao enviar: ' + err.message;
+        status.style.color = 'red';
       });
   }
 
+  // Listar fotos salvas
   function listarFotos() {
     const lista = document.getElementById('listaFotos');
     lista.innerHTML = '';
@@ -64,6 +81,7 @@
     });
   }
 
+  document.getElementById('btnUpload').addEventListener('click', uploadFoto);
   listarFotos();
 </script>
 
