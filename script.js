@@ -12,6 +12,16 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
+function climaParaEmoji(texto) {
+  texto = texto.toLowerCase();
+  if (texto.includes('sun') || texto.includes('sol')) return '☀️';
+  if (texto.includes('cloud') || texto.includes('nublado')) return '☁️';
+  if (texto.includes('rain') || texto.includes('chuva')) return '🌧️';
+  if (texto.includes('storm') || texto.includes('tempest')) return '⛈️';
+  if (texto.includes('snow') || texto.includes('neve')) return '❄️';
+  return '🌡️';
+}
+
 async function carregarPrevisao() {
   const container = document.getElementById('weatherWeek');
   try {
@@ -24,13 +34,13 @@ async function carregarPrevisao() {
       const dataObj = new Date(dia.date);
       const nomeDia = dataObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase();
       const temp = `${dia.mintempC}° / ${dia.maxtempC}°`;
-      const icone = dia.hourly[4].weatherIconUrl[0].value;
       const desc = dia.hourly[4].weatherDesc[0].value;
+      const emoji = climaParaEmoji(desc);
 
       const div = document.createElement('div');
       div.className = 'weather-day';
       div.innerHTML = `<div>${nomeDia}</div>
-                       <img src="${icone}">
+                       <div style="font-size:2em">${emoji}</div>
                        <div>${temp}</div>`;
       container.appendChild(div);
     });
