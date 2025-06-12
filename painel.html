@@ -3,56 +3,44 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel</title>
+  <title>Planner Familiar</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; background: #111; color: #fff; font-family: sans-serif; }
-    .painel {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 10px;
-      height: 100vh;
-      padding: 10px;
-    }
-    .bloco {
-      background: #222;
-      border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #relogio {
-      font-size: 3em;
-      font-weight: bold;
-    }
-    .clima-img {
-      width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="painel">
-    <div class="bloco" style="grid-column: 1; grid-row: 1;"><div id="relogio">--:--</div></div>
-    <div class="bloco" style="grid-column: 2; grid-row: 1;"><img src="https://wttr.in/Sao+Paulo.png?m" class="clima-img" alt="Clima"></div>
-    <div class="bloco" style="grid-column: 3; grid-row: 1;">Livre</div>
-    <div class="bloco" style="grid-column: 4 / span 2; grid-row: 1 / span 2;"><img id="carrossel" src="" alt="Foto" style="width:100%; height:100%; object-fit:cover; border-radius:10px;"></div>
-    <div class="bloco" style="grid-column: 1 / span 3; grid-row: 2 / span 3;">Calendário</div>
-    <div class="bloco" style="grid-column: 4; grid-row: 3 / span 2;">Programação</div>
-    <div class="bloco" style="grid-column: 5; grid-row: 2;">Livre</div>
-    <div class="bloco" style="grid-column: 5; grid-row: 3;">Livre</div>
-    <div class="bloco" style="grid-column: 5; grid-row: 4;">Livre</div>
+  <div class="grid-container">
+
+    <div class="bloco relogio" style="grid-column: 1; grid-row: 1;">
+      <div class="relogio-central">
+        <div id="clock" class="clock-text"></div>
+        <div id="greeting" class="greeting-text"></div>
+      </div>
+    </div>
+
+    <div class="bloco clima" style="grid-column: 2; grid-row: 1;">
+      <div id="weatherWeek" class="weather-week"></div>
+    </div>
+
+    <div class="bloco livre" style="grid-column: 3; grid-row: 1;"></div>
+
+    <div class="bloco foto" style="grid-column: 4 / 6; grid-row: 1 / 3;">
+      <div id="photo"></div>
+    </div>
+
+    <div class="bloco calendario" style="grid-column: 1 / 4; grid-row: 2 / 5;">
+      <iframe src="https://calendar.google.com/calendar/embed?src=familiadipetta%40gmail.com&ctz=America%2FSao_Paulo"
+              frameborder="0" scrolling="no"></iframe>
+    </div>
+
+    <div class="bloco programacao" style="grid-column: 4; grid-row: 3 / 5;">
+      <iframe src="https://calendar.google.com/calendar/embed?src=familiadipetta%40gmail.com&ctz=America%2FSao_Paulo&mode=AGENDA"
+              frameborder="0" scrolling="no"></iframe>
+    </div>
+
+    <div class="bloco livre" style="grid-column: 5; grid-row: 3 / 5;"></div>
+
   </div>
-  <script>
-    function atualizaHora() {
-      const agora = new Date();
-      document.getElementById('relogio').textContent = agora.toLocaleTimeString();
-    }
-    setInterval(atualizaHora, 1000);
-    atualizaHora();
-  </script>
+
+  <script src="script.js"></script>
 </body>
 </html>
