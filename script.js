@@ -27,8 +27,7 @@ async function carregarPrevisao() {
   try {
     const res = await fetch('https://wttr.in/Sao+Paulo?format=j1');
     const data = await res.json();
-    const dias = data.weather.slice(0, 3); // hoje, amanhã, depois
-
+    const dias = data.weather.slice(0, 3);
     container.innerHTML = '';
 
     dias.forEach((dia) => {
@@ -50,3 +49,40 @@ async function carregarPrevisao() {
   }
 }
 carregarPrevisao();
+
+// Firebase SDK
+const firebaseConfig = {
+  apiKey: "AIzaSyAa_IPmOWZ4-KpWIC7huhhl7mYjYfEJhDk",
+  authDomain: "diphouse-control.firebaseapp.com",
+  databaseURL: "https://diphouse-control-default-rtdb.firebaseio.com",
+  projectId: "diphouse-control",
+  storageBucket: "diphouse-control.appspot.com",
+  messagingSenderId: "126387069829",
+  appId: "1:126387069829:web:7e365252a98da884075aec"
+};
+firebase.initializeApp(firebaseConfig);
+const storage = firebase.storage();
+
+// Carrossel de fotos
+async function iniciarCarrossel() {
+  const container = document.getElementById('photo');
+  const img = document.createElement('img');
+  container.innerHTML = '';
+  container.appendChild(img);
+
+  const fotosRef = storage.ref('fotos');
+  try {
+    const res = await fotosRef.listAll();
+    const urls = await Promise.all(res.items.map(item => item.getDownloadURL()));
+    let index = 0;
+    function trocarImagem() {
+      img.src = urls[index];
+      index = (index + 1) % urls.length;
+    }
+    trocarImagem();
+    setInterval(trocarImagem, 5000);
+  } catch {
+    img.src = 'https://via.placeholder.com/400x300?text=Sem+Fotos';
+  }
+}
+iniciarCarrossel();
