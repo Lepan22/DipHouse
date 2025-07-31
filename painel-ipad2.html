@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Planner Familiar</title>
+  <title>Planner Familiar - iPad</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="style-ipad2.css">
 </head>
@@ -11,8 +11,8 @@
 
     <div class="bloco relogio" style="grid-column: 1; grid-row: 1;">
       <div class="relogio-central">
-        <div id="clock" class="clock-text"></div>
-        <div id="greeting" class="greeting-text"></div>
+        <div id="clock" class="clock-text">00:00</div>
+        <div id="greeting" class="greeting-text">Olá</div>
       </div>
     </div>
 
@@ -28,43 +28,73 @@
 
     <div class="bloco calendario" style="grid-column: 1 / 4; grid-row: 2 / 5;">
       <iframe src="https://calendar.google.com/calendar/embed?src=familiadipetta%40gmail.com&ctz=America%2FSao_Paulo"
-              frameborder="0" scrolling="no"></iframe>
+              frameborder="0" scrolling="no" width="100%" height="100%"></iframe>
     </div>
 
     <div class="bloco programacao" style="grid-column: 4; grid-row: 3 / 5;">
       <iframe src="https://calendar.google.com/calendar/embed?src=familiadipetta%40gmail.com&ctz=America%2FSao_Paulo&mode=AGENDA"
-              frameborder="0" scrolling="no"></iframe>
+              frameborder="0" scrolling="no" width="100%" height="100%"></iframe>
     </div>
 
     <div class="bloco livre" style="grid-column: 5; grid-row: 3 / 5;"></div>
 
   </div>
 
-  <!-- Scripts compatíveis com iPad 2 -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+  <!-- Clima para iPad -->
+  <script src="weather-ipad2.js"></script>
+
+  <!-- Relógio compatível com iPad antigo -->
   <script>
-    // Configuração Firebase
-    var firebaseConfig = {
-      apiKey: "AIzaSyD304qg6DdYz0gBVxDIVHW5bKUq6MabRI4",
-      authDomain: "diphouse-planner.firebaseapp.com",
-      databaseURL: "https://diphouse-planner-default-rtdb.firebaseio.com",
-      projectId: "diphouse-planner",
-      storageBucket: "diphouse-planner.appspot.com",
-      messagingSenderId: "621999172821",
-      appId: "1:621999172821:web:df6fed5d21cb35ff81065c",
-      measurementId: "G-ZP3YQTYHMD"
-    };
-    
-    try {
-      firebase.initializeApp(firebaseConfig);
-    } catch (e) {
-      console.log('Firebase não pôde ser inicializado:', e);
+    function updateClock() {
+      var now = new Date();
+      var hours = now.getHours();
+      var minutes = now.getMinutes();
+
+      if (hours < 10) hours = "0" + hours;
+      if (minutes < 10) minutes = "0" + minutes;
+
+      document.getElementById('clock').innerHTML = hours + ":" + minutes;
+
+      var greeting = "Boa noite";
+      if (now.getHours() < 12) {
+        greeting = "Bom dia";
+      } else if (now.getHours() < 18) {
+        greeting = "Boa tarde";
+      }
+      document.getElementById('greeting').innerHTML = greeting;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+
+  <!-- Carrossel com links diretos (sem Firebase) -->
+  <script>
+    var imagens = [
+      "https://firebasestorage.googleapis.com/v0/b/diphouse-planner.firebasestorage.app/o/Fotos%2Ffoto1.JPG?alt=media&token=be8f8796-de7f-44c1-a075-545590f5f570",
+      "https://firebasestorage.googleapis.com/v0/b/diphouse-planner.firebasestorage.app/o/Fotos%2Ffoto2.JPG?alt=media&token=639efaf1-0677-42c8-bf0d-9ef67be2d56f"
+    ];
+
+    var container = document.getElementById('photo');
+    var img = document.createElement('img');
+    img.alt = 'Foto';
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '6px';
+    container.appendChild(img);
+
+    var index = 0;
+    function mostrarFoto() {
+      img.src = imagens[index];
+      index = (index + 1) % imagens.length;
+    }
+
+    if (imagens.length > 0) {
+      mostrarFoto();
+      setInterval(mostrarFoto, 5000);
+    } else {
+      container.innerHTML = "Nenhuma imagem disponível";
     }
   </script>
-  <script src="script.js"></script>
-  <script src="weather-ipad2.js"></script>
-  <script src="carousel-ipad2.js"></script>
 </body>
 </html>
-
