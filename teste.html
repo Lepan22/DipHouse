@@ -1,9 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Painel com Carrossel</title>
+  <title>Carrossel de Fotos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
   <style>
@@ -17,11 +17,14 @@
       align-items: center;
       height: 100vh;
     }
+
     #carrossel {
       width: 90%;
       height: 90%;
-      border-radius: 10px;
+      max-width: 900px;
+      max-height: 700px;
       object-fit: cover;
+      border-radius: 10px;
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
   </style>
@@ -45,26 +48,27 @@
 
   async function iniciarCarrossel() {
     const ref = storage.ref('fotos');
+    const img = document.getElementById('carrossel');
+
     try {
       const res = await ref.listAll();
       const urls = await Promise.all(res.items.map(item => item.getDownloadURL()));
-      let index = 0;
-      const img = document.getElementById('carrossel');
+      if (urls.length === 0) {
+        img.src = 'https://via.placeholder.com/800x600?text=Sem+Fotos';
+        return;
+      }
 
+      let index = 0;
       function mostrar() {
         img.src = urls[index];
         index = (index + 1) % urls.length;
       }
 
-      if (urls.length > 0) {
-        mostrar();
-        setInterval(mostrar, 5000);
-      } else {
-        img.alt = 'Nenhuma imagem disponível';
-      }
+      mostrar();
+      setInterval(mostrar, 5000);
     } catch (err) {
       console.error('Erro ao carregar imagens:', err);
-      document.getElementById('carrossel').alt = 'Erro ao carregar imagens';
+      img.src = 'https://via.placeholder.com/800x600?text=Erro+ao+carregar';
     }
   }
 
